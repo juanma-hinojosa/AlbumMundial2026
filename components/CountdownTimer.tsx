@@ -73,12 +73,13 @@ const styles = StyleSheet.create({
     padding: 5,
   },
   number: {
-    fontSize: 32,
+    fontSize: 62,
     fontWeight: "bold",
+    color: "#D1D4D1"
   },
   label: {
     fontSize: 14,
-    color: "#555",
+    color: "#D1D4D1",
   },
 });
 

@@ -1,4 +1,6 @@
+import AntDesign from '@expo/vector-icons/AntDesign';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Tabs } from "expo-router";
 
 export default function TabsLayout() {
@@ -22,9 +24,37 @@ export default function TabsLayout() {
           <Ionicons name={focused ? 'home-sharp' : 'home-outline'} color={color} size={24} />
         ),
       }} />
-      <Tabs.Screen name="stickerAlbum" options={{ title: 'Sticker Album' }} />
-      <Tabs.Screen name="stickerObtained" options={{ title: 'Sticker Obtained' }} />
-      <Tabs.Screen name="remainingStickerAlbum" options={{ title: 'Remaining Sticker Album' }} />
+      <Tabs.Screen name="stickerAlbum"
+        options={{
+          title: 'Album',
+          tabBarIcon: ({ color, focused }) => (<AntDesign name="book" size={24} color={color} />)
+        }}
+      />
+      <Tabs.Screen name="remainingStickerAlbum"
+        options={{
+          title: 'Figus Faltantes',
+          tabBarIcon: ({ color, focused }) => (<AntDesign name="search" size={24} color={color} />)
+        }}
+      />
+      <Tabs.Screen name="fixture"
+        options={{
+          title: 'Fixture',
+          tabBarIcon: ({ color, focused }) => (<MaterialCommunityIcons name="merge" size={24} color={color} />)
+        }}
+      />
+      {/* <Tabs.Screen name="stickerObtained"
+        options={{
+          title: 'Figus Obtenidas',
+          tabBarIcon: ({ color, focused }) => (<AntDesign name="safety-certificate" size={24} color={color} />)
+        }}
+      /> */}
+
+      <Tabs.Screen name="stickerObtained"
+        options={{
+          title: 'Figus Obtenidas',
+          tabBarIcon: ({ color, focused }) => (<MaterialCommunityIcons name="merge" size={24} color={color} />)
+        }}
+      />
     </Tabs>
   )
 }
