@@ -1,8 +1,9 @@
 import CountdownTimer from "@/components/CountdownTimer";
-import { ImageBackground } from "expo-image";
+import { Image, ImageBackground } from "expo-image";
 import { StyleSheet, Text, View } from "react-native";
 
-const PlaceholderImage = require('@/assets/images/hero-home.webp')
+const PlaceholderImage = require('@/assets/images/hero-home.jpg')
+const LogoWorldCup = require('@/assets/images/logo-world-cup.png')
 
 export default function Index() {
   return (
@@ -13,22 +14,25 @@ export default function Index() {
         source={PlaceholderImage}
         resizeMode="cover"
         style={styles.imageContainer}
+        alt="Background Image Messi"
       >
-
         <View style={styles.overlay}>
-          {/* <View>
-            <Text style={styles.text} >Album de Figuritas del mundial 2026</Text>
-          </View> */}
+          <View>
+            <Image
+              source={LogoWorldCup}
+              style={styles.logo}
+              alt="Fifa World Cup Logo"
+            />
+          </View>
 
-          <Text style={styles.text}>
-            FALTAN
-          </Text>
-          <CountdownTimer targetDate="2026-06-11T23:59:59" />
-          <Text style={styles.text}>
-            Dias para el inicio del
-            <br />
-            MUNDIAL
-          </Text>
+          <View
+            style={styles.textContainer}
+          >
+            <Text style={styles.text}>
+              FALTAN
+            </Text>
+            <CountdownTimer targetDate="2026-06-11T23:59:59" />
+          </View>
         </View>
       </ImageBackground>
     </View>
@@ -50,8 +54,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject, // Hace que el View cubra completamente su padre
-    backgroundColor: 'rgba(0, 0, 0, 0.7)', // 0.5 es la opacidad de la capa oscura
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    alignItems: 'center',
+    justifyContent: 'flex-start', // <- Alinea todo desde arriba
+  },
+  logo: {
+    marginTop: 50, // <- Lo deja en la parte superior centrado
+    width: 80,
+    height: 80,
+  },
+  textContainer: {
+    marginTop: 80, // <- Lo baja al centro visual (ajusta si quieres)
     justifyContent: 'center',
     alignItems: 'center',
   },

@@ -1,32 +1,39 @@
 import albumData from "@/data/figus-db.json";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { FlashList } from "@shopify/flash-list";
+import { StyleSheet, Text, View } from "react-native";
 
 export default function StickerAlbumScreen() {
-  return(
+  return (
     <View style={styles.container}>
       <Text style={styles.mainTitle}>Lista de Figus</Text>
 
-      <ScrollView>
-        {albumData.map((paisObj, index) => {
-          // 1. Extraemos el nombre del país (la llave dinámica)
-          const nombrePais = Object.keys(paisObj)[0]; 
-          // 2. Obtenemos el array de figuritas usando ese nombre
-          const listaFiguritas = paisObj[nombrePais];
+      <FlashList
+        data={albumData}
+        // @ts-ignore: estimatedItemSize exists at runtime for FlashList but may be missing in installed types
+        estimatedItemSize={200}   // <- Muy importante para el rendimiento
+        showsVerticalScrollIndicator={false}
+        bounces={true}
+        alwaysBounceVertical={true}
+        overScrollMode="always"
+        scrollEventThrottle={16}
+        decelerationRate="fast"   // <- Scroll suave estilo iOS
+        contentContainerStyle={styles.scrollContent}
+        keyExtractor={(item, index) => index.toString()}
+        renderItem={({ item }) => {
+          const nombrePais = Object.keys(item)[0];
+          const listaFiguritas = Object.values(item)[0] as { id: string; cantidad: number }[];
 
           return (
-            <View key={index} style={styles.sectionContainer}>
-              {/* Título del País */}
+            <View style={styles.sectionContainer}>
               <Text style={styles.countryHeader}>{nombrePais}</Text>
-              
-              {/* Grid de Figuritas */}
+
               <View style={styles.stickersGrid}>
-                {listaFiguritas.map((figu) => (
-                  <View 
-                    key={figu.id} 
+                {listaFiguritas.map((figu: any) => (
+                  <View
+                    key={figu.id}
                     style={[
-                      styles.stickerItem, 
-                      // Estilo condicional si tienes la figu (cantidad > 0)
-                      figu.cantidad > 0 && styles.stickerOwned
+                      styles.stickerItem,
+                      figu.cantidad > 0 && styles.stickerOwned,
                     ]}
                   >
                     <Text style={styles.stickerText}>{figu.id}</Text>
@@ -36,8 +43,8 @@ export default function StickerAlbumScreen() {
               </View>
             </View>
           );
-        })}
-      </ScrollView>
+        }}
+      />
     </View>
   )
 }

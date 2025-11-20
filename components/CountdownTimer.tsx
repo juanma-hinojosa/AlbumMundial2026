@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-const CountdownTimer = ({ targetDate }) => {
+const CountdownTimer: React.FC<{ targetDate: string | Date }> = ({ targetDate }) => {
   const calculateTimeLeft = () => {
     const difference = +new Date(targetDate) - +new Date();
 
