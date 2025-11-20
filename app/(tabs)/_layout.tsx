@@ -7,14 +7,14 @@ export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#ffd33d',
+        tabBarActiveTintColor: '#2A398D',
         headerStyle: {
           backgroundColor: '#25292e',
         },
         headerShadowVisible: false,
         headerTintColor: '#fff',
         tabBarStyle: {
-          backgroundColor: '#25292e',
+          backgroundColor: '#e7e7e7ff',
         },
       }}
     >
@@ -42,13 +42,6 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, focused }) => (<MaterialCommunityIcons name="merge" size={24} color={color} />)
         }}
       />
-      {/* <Tabs.Screen name="stickerObtained"
-        options={{
-          title: 'Figus Obtenidas',
-          tabBarIcon: ({ color, focused }) => (<AntDesign name="safety-certificate" size={24} color={color} />)
-        }}
-      /> */}
-
       <Tabs.Screen name="stickerObtained"
         options={{
           title: 'Figus Obtenidas',

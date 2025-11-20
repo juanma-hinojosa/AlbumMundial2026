@@ -21,11 +21,14 @@ export default function Index() {
           </View> */}
 
           <Text style={styles.text}>
-            Dias restante para el inicio del 
+            FALTAN
+          </Text>
+          <CountdownTimer targetDate="2026-06-11T23:59:59" />
+          <Text style={styles.text}>
+            Dias para el inicio del
             <br />
             MUNDIAL
           </Text>
-          <CountdownTimer targetDate="2026-06-11T23:59:59" />
         </View>
       </ImageBackground>
     </View>
