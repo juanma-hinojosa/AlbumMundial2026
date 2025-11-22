@@ -1,10 +1,16 @@
+import { StickerGrid } from "@/components/StickerGrid";
 import { StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function remainingStickerAlbumScreen() {
   return(
-    <View style={styles.container}>
-      <Text style={styles.text}>Figuritas Faltantes</Text>
-    </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+      {/* Puedes agregar un encabezado extra si quieres */}
+      <View style={{ padding: 10, backgroundColor: '#ffebee' }}>
+        <Text style={{ color: '#c62828', fontWeight: 'bold' }}>¡A buscarlas!</Text>
+      </View>
+      <StickerGrid filterType="missing" />
+    </SafeAreaView>
   )
 }
 

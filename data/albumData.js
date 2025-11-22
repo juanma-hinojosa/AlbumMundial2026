@@ -32,9 +32,9 @@ export const albumData = [
     code: "UY",
     flag: "",
     stickers: [
-      // { id: "URU_0", number: 0, name: "Escudo AFA", type: "shield" },
-      // { id: "URU_1", number: 1, name: "Emiliano Martínez", type: "player" },
-      // { id: "URU_10", number: 10, name: "Lionel Messi", type: "player" },
+      { id: "URU_0", number: 0, name: "Escudo AFA", type: "shield" },
+      { id: "URU_1", number: 1, name: "Emiliano Martínez", type: "player" },
+      { id: "URU_10", number: 10, name: "Lionel Messi", type: "player" },
       // ... resto del equipo
     ]
   },
@@ -44,9 +44,9 @@ export const albumData = [
     code: "US",
     flag: "",
     stickers: [
-      // { id: "USA_0", number: 0, name: "Escudo AFA", type: "shield" },
-      // { id: "USA_1", number: 1, name: "Emiliano Martínez", type: "player" },
-      // { id: "USA_10", number: 10, name: "Lionel Messi", type: "player" },
+      { id: "USA_0", number: 0, name: "Escudo AFA", type: "shield" },
+      { id: "USA_1", number: 1, name: "Emiliano Martínez", type: "player" },
+      { id: "USA_10", number: 10, name: "Lionel Messi", type: "player" },
       // ... resto del equipo
     ]
   },
@@ -56,9 +56,9 @@ export const albumData = [
     code: "MX",
     flag: "",
     stickers: [
-      // { id: "USA_0", number: 0, name: "Escudo AFA", type: "shield" },
-      // { id: "USA_1", number: 1, name: "Emiliano Martínez", type: "player" },
-      // { id: "USA_10", number: 10, name: "Lionel Messi", type: "player" },
+      { id: "MEX_0", number: 0, name: "Escudo AFA", type: "shield" },
+      { id: "MEX_1", number: 1, name: "Emiliano Martínez", type: "player" },
+      { id: "MEX_10", number: 10, name: "Lionel Messi", type: "player" },
       // ... resto del equipo
     ]
   },
@@ -68,9 +68,9 @@ export const albumData = [
     code: "fr",
     flag: "",
     stickers: [
-      // { id: "USA_0", number: 0, name: "Escudo AFA", type: "shield" },
-      // { id: "USA_1", number: 1, name: "Emiliano Martínez", type: "player" },
-      // { id: "USA_10", number: 10, name: "Lionel Messi", type: "player" },
+      { id: "FRA_0", number: 0, name: "Escudo AFA", type: "shield" },
+      { id: "FRA_1", number: 1, name: "Emiliano Martínez", type: "player" },
+      { id: "FRA_10", number: 10, name: "Lionel Messi", type: "player" },
       // ... resto del equipo
     ]
   },

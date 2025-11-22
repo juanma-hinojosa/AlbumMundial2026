@@ -1,12 +1,14 @@
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-export const StickerItem = ({ item, quantity = 0, onToggle }) => {
+export const StickerItem = ({ item, quantity = 0, onToggle, onDecrement }) => {
   const isOwned = quantity > 0;
   const isRepeated = quantity > 1;
 
   return (
     <TouchableOpacity
       onPress={onToggle}
+      onLongPress={onDecrement}
+      delayLongPress={500}
       style={[styles.container, isOwned ? styles.owned : styles.missing]}
     >
       <Text >{item.number}</Text>
