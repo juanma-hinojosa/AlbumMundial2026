@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
     alignItems: 'center',
-    justifyContent: 'flex-start', // <- Alinea todo desde arriba
+    // justifyContent: 'flex-start', // <- Alinea todo desde arriba
   },
   logo: {
     marginTop: 50, // <- Lo deja en la parte superior centrado
