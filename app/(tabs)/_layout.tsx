@@ -49,6 +49,14 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, focused }) => (<MaterialCommunityIcons name="merge" size={24} color={color} />)
         }}
       />
+
+      <Tabs.Screen 
+        name="exchange" // <--- Nombre del archivo (ver nota abajo)
+        options={{
+          title: 'Cambiar',
+          tabBarIcon: ({ color }) => <Ionicons name="qr-code" size={24} color={color} />,
+        }} 
+      />
     </Tabs>
   )
 }
