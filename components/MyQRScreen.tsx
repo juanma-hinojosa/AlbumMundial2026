@@ -1,4 +1,4 @@
-import ScannerScreen from '@/app/(tabs)/ScannerScreen';
+import ScannerScreen from '@/components/ScannerScreen';
 import { useStickers } from '@/context/StickerContext';
 import { generateQRString } from '@/utils/exchangeLogic';
 import Ionicons from '@expo/vector-icons/Ionicons';

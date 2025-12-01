@@ -26,30 +26,6 @@ export const generateQRString = (inventory: InventoryType): string => {
 
 type InventoryType = Record<string, number>;
 
-// export const generateQRString = (inventory: InventoryType): string => {
-//   const needs: string[] = [];
-//   const swaps: string[] = [];
-
-//   // Recorremos el albumData estático para saber qué existe
-//   // (Es más seguro recorrer el álbum que el inventario, por si el inventario está incompleto)
-//   albumData.forEach(country => {
-//     country.stickers.forEach(sticker => {
-//       const count = inventory[sticker.id] || 0;
-
-//       if (count === 0) {
-//         needs.push(sticker.id);
-//       } else if (count > 1) {
-//         swaps.push(sticker.id)
-//       }
-//     });
-//   });
-
-//   const needString = `Necesito: ${needs.join(',')}`;
-//   const swapString = `Cambio: ${swaps.join(',')}`;
-
-//   return `${needString}|${swapString}`;
-// };
-
 
 const findStickerById = (id: string) => {
   for (const country of albumData) {
