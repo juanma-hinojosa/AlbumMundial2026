@@ -12,7 +12,7 @@ export const StickerItem = ({ item, quantity = 0, onToggle, onDecrement }) => {
       style={[styles.container, isOwned ? styles.owned : styles.missing]}
     >
       <Text >{item.number}</Text>
-      <Text>{item.id}</Text>
+      {/* <Text>{item.id}</Text> */}
 
       {isRepeated && (
         <View style={styles.badge}>
@@ -26,7 +26,7 @@ export const StickerItem = ({ item, quantity = 0, onToggle, onDecrement }) => {
 const styles = StyleSheet.create({
   container: {
     width: '100%', 
-    padding: 25,
+    padding: 10,
     borderWidth: 1,
     borderColor: '#ddd',
     alignItems: 'center',

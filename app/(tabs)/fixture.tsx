@@ -1,5 +1,7 @@
+// import { FixtureScreen } from '../../components/FixtureScreen';
+
+import FixtureMatch from "@/components/FixtureScreen";
+
 export default function FixtureScreen() {
-  return(
-    <h1>Soy el Fixture Screen</h1>
-  )
+  return <FixtureMatch />
 }
