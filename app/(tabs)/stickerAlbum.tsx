@@ -1,20 +1,93 @@
 import { StickerGrid } from "@/components/StickerGrid";
+import { useState } from "react";
 // import { StickerItem } from "@/components/stickerItem";
 // import albumData from "@/data/figus-db.json";
-import { StyleSheet } from "react-native";
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import RemainingStickerAlbumScreen from "../../components/remainingStickerAlbum";
+import StickerObtainedScreen from "../../components/stickersObtained";
 
 // albumData
 export default function StickerAlbumScreen() {
+  const [activeTab, setActiveTab] = useState<'all' | 'missing' | 'repeated'>('all');
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'missing':
+        return <RemainingStickerAlbumScreen />;
+      case 'repeated':
+        return <StickerObtainedScreen />;
+      default:
+        return <StickerGrid filterType="all" />;
+    }
+  };
+
   return (
-   <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
-      <StickerGrid filterType="all" />
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.tabsContainer}
+        contentContainerStyle={{ paddingHorizontal: 10 }}
+      >
+        <TabButton label="Todas" active={activeTab === 'all'} onPress={() => setActiveTab('all')} />
+        <TabButton label="Faltantes" active={activeTab === 'missing'} onPress={() => setActiveTab('missing')} />
+        <TabButton label="Repetidas" active={activeTab === 'repeated'} onPress={() => setActiveTab('repeated')} />
+        <TabButton label='Intercambiar QR' />
+        <TabButton label='Compartir' />
+        <TabButton label='Estadisticas' />
+        <TabButton label='Escanear Album' />
+      </ScrollView>
+
+      <View style={{ flex: 1 }}>
+        {renderContent()}
+      </View>
     </SafeAreaView>
   );
 
 }
 
+const TabButton = ({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) => {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      style={[styles.tabButton, active && styles.activeTab]}
+    >
+      <Text style={[styles.tabText, active && styles.activeTabText]}>
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+};
+
 const styles = StyleSheet.create({
+  tabsContainer: {
+    paddingTop: 10,
+    paddingBottom: 10,
+    maxHeight: 60,
+    marginBottom: 5,
+  },
+  tabButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: '#eee',
+    borderRadius: 20,
+    marginRight: 10,
+
+
+    justifyContent: 'center',  // centra vertical
+    alignItems: 'center',      // centra horizontal
+  },
+  activeTab: {
+    backgroundColor: '#333',
+  },
+  tabText: {
+    color: '#333',
+    fontWeight: 'bold',
+  },
+  activeTabText: {
+    color: '#fff',
+  },
   container: { flex: 1, backgroundColor: '#fff' },
   header: {
     backgroundColor: '#f4f4f4',

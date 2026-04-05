@@ -2,13 +2,14 @@ import { StickerGrid } from "@/components/StickerGrid";
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function StickerObtainedScreen() {
+export default function RemainingStickerAlbumScreen() {
   return(
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
-       <View style={{ padding: 10, backgroundColor: '#e8f5e9' }}>
-        <Text style={{ color: '#2e7d32', fontWeight: 'bold' }}>Listas para cambiar</Text>
+      {/* Puedes agregar un encabezado extra si quieres */}
+      <View style={{ padding: 10, backgroundColor: '#ffebee' }}>
+        <Text style={{ color: '#c62828', fontWeight: 'bold' }}>¡A buscarlas!</Text>
       </View>
-      <StickerGrid filterType="repeated" />
+      <StickerGrid filterType="missing" />
     </SafeAreaView>
   )
 }

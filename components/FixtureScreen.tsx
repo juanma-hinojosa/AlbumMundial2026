@@ -64,29 +64,6 @@ export default function FixtureMatch() {
     );
   };
 
-  // const renderContent = () => {
-  //   if (activeTab === 'standings') {
-  //     return (
-  //       <FlatList
-  //         data={initialStandings}
-  //         keyExtractor={(item) => item.id}
-  //         renderItem={({ item }) => <GroupTable group={item} />}
-  //         contentContainerStyle={{ paddingTop: 15, paddingBottom: 20 }}
-  //       />
-  //     );
-  //   }
-
-  //   // Para los partidos (Fixture)
-  //   return (
-  //     <FlatList
-  //       data={getMatches()}
-  //       // ... props anteriores ...
-  //       renderItem={({ item }) => <MatchCard match={item} />}
-  //     // ...
-  //     />
-  //   );
-  // };
-
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.headerContainer}>

@@ -31,25 +31,14 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, focused }) => (<AntDesign name="book" size={24} color={color} />)
         }}
       />
-      <Tabs.Screen name="remainingStickerAlbum"
-        options={{
-          title: 'Figus Faltantes',
-          tabBarIcon: ({ color, focused }) => (<AntDesign name="search" size={24} color={color} />)
-        }}
-      />
+
       <Tabs.Screen name="fixture"
         options={{
           title: 'Fixture',
           tabBarIcon: ({ color, focused }) => (<MaterialCommunityIcons name="merge" size={24} color={color} />)
         }}
       />
-      <Tabs.Screen name="stickerObtained"
-        options={{
-          title: 'Figus Obtenidas',
-          tabBarIcon: ({ color, focused }) => (<MaterialCommunityIcons name="merge" size={24} color={color} />)
-        }}
-      />
-
+      
       <Tabs.Screen 
         name="exchange" // <--- Nombre del archivo (ver nota abajo)
         options={{
