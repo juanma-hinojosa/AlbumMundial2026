@@ -1,6 +1,11 @@
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-export const StickerItem = ({ item, quantity = 0, onToggle, onDecrement }) => {
+interface Sticker {
+  codigo: string;
+  id: number;
+}
+
+export const StickerItem = ({ item, quantity = 0, onToggle, onDecrement }: { item: Sticker; quantity?: number; onToggle: () => void; onDecrement: () => void }) => {
   const isOwned = quantity > 0;
   const isRepeated = quantity > 1;
 
@@ -11,7 +16,7 @@ export const StickerItem = ({ item, quantity = 0, onToggle, onDecrement }) => {
       delayLongPress={500}
       style={[styles.container, isOwned ? styles.owned : styles.missing]}
     >
-      <Text >{item.number}</Text>
+      <Text >{item.codigo}</Text>
       {/* <Text>{item.id}</Text> */}
 
       {isRepeated && (
