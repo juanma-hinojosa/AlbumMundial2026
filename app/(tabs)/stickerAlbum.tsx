@@ -1,7 +1,6 @@
 import { StickerGrid } from "@/components/StickerGrid";
+import { StickerStats } from "@/components/StickerStats";
 import { useState } from "react";
-// import { StickerItem } from "@/components/stickerItem";
-// import albumData from "@/data/figus-db.json";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import RemainingStickerAlbumScreen from "../../components/remainingStickerAlbum";
@@ -9,16 +8,19 @@ import StickerObtainedScreen from "../../components/stickersObtained";
 
 // albumData
 export default function StickerAlbumScreen() {
-  const [activeTab, setActiveTab] = useState<'all' | 'missing' | 'repeated'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'missing' | 'repeated' | 'estadisticas'>('all');
 
   const renderContent = () => {
     switch (activeTab) {
+      case 'estadisticas':
+        return <StickerStats />;
       case 'missing':
         return <RemainingStickerAlbumScreen />;
       case 'repeated':
         return <StickerObtainedScreen />;
       default:
         return <StickerGrid filterType="all" />;
+
     }
   };
 
@@ -33,10 +35,9 @@ export default function StickerAlbumScreen() {
         <TabButton label="Todas" active={activeTab === 'all'} onPress={() => setActiveTab('all')} />
         <TabButton label="Faltantes" active={activeTab === 'missing'} onPress={() => setActiveTab('missing')} />
         <TabButton label="Repetidas" active={activeTab === 'repeated'} onPress={() => setActiveTab('repeated')} />
-        <TabButton label='Intercambiar QR' />
-        <TabButton label='Compartir' />
-        <TabButton label='Estadisticas' />
-        <TabButton label='Escanear Album' />
+        <TabButton label='Estadisticas' active={activeTab === 'estadisticas'} onPress={() => setActiveTab('estadisticas')} />
+        {/* <TabButton label='Intercambiar' /> */}
+        {/* <TabButton label='Escanear Album' /> */}
       </ScrollView>
 
       <View style={{ flex: 1 }}>
