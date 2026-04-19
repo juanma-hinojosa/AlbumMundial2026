@@ -1,72 +1,90 @@
+import { useAuth } from '@/context/AuthContext'; // Importamos el Auth
+import { supabase } from '@/utils/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
-// Clave para guardar en el teléfono
 const STORAGE_KEY = '@sticker_inventory_v1';
-
-// 1. Definimos la "forma" de nuestro inventario
-// Un objeto donde la clave es un string (ID) y el valor un número (cantidad)
 type InventoryType = Record<string, number>;
 
-// 2. Definimos la interfaz de lo que el Contexto va a exponer
 interface StickerContextType {
   inventory: InventoryType;
-  isLoading: boolean; // Agregamos esto para saber si aún estamos leyendo datos
+  isLoading: boolean;
   toggleSticker: (id: string) => void;
   decrementSticker: (id: string) => void;
 }
 
-// 3. Creamos el contexto.
-// Inicialmente es undefined para forzar a que se use dentro del Provider.
 const StickerContext = createContext<StickerContextType | undefined>(undefined);
 
-// 4. Tipamos las props del Provider (necesita children)
-interface StickerProviderProps {
-  children: ReactNode;
-}
-
-export const StickerProvider: React.FC<StickerProviderProps> = ({ children }) => {
-  // Estado inicial tipado
+export const StickerProvider = ({ children }: { children: ReactNode }) => {
+  const { user } = useAuth(); // Sabemos si el usuario está logueado
   const [inventory, setInventory] = useState<InventoryType>({});
   const [isLoading, setIsLoading] = useState(true);
 
-  // 1. EFECTO DE CARGA (Se ejecuta una sola vez al iniciar)
+  // 1. EFECTO DE CARGA: Decide si lee de local o de Supabase
   useEffect(() => {
     const loadData = async () => {
+      setIsLoading(true);
       try {
-        const jsonValue = await AsyncStorage.getItem(STORAGE_KEY);
-        if (jsonValue != null) {
-          // Si hay datos guardados, los cargamos
-          setInventory(JSON.parse(jsonValue));
+        if (user) {
+          // Si hay usuario, leemos desde Supabase (Nube)
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('inventory')
+            .eq('id', user.id)
+            .single();
+
+          if (!error && data?.inventory) {
+            setInventory(data.inventory);
+            // Backup local por si se queda sin internet
+            await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data.inventory));
+          }
+        } else {
+          // Si NO hay usuario (o es anónimo), leemos desde el teléfono
+          const jsonValue = await AsyncStorage.getItem(STORAGE_KEY);
+          if (jsonValue != null) setInventory(JSON.parse(jsonValue));
         }
       } catch (e) {
         console.error("Error cargando datos:", e);
       } finally {
-        // Pase lo que pase, terminamos de cargar
         setIsLoading(false);
       }
     };
 
     loadData();
-  }, []);
+  }, [user]); // Se re-ejecuta si el usuario inicia o cierra sesión
 
-  // 2. EFECTO DE GUARDADO (Se ejecuta cada vez que 'inventory' cambia)
+  // 2. EFECTO DE GUARDADO: Guarda en local y, si hay sesión, en la nube
   useEffect(() => {
     const saveData = async () => {
+      if (isLoading) return;
+
       try {
-        // IMPORTANTE: No guardar si todavía estamos cargando. 
-        // Esto evita sobreescribir los datos guardados con un objeto vacío al inicio.
-        if (!isLoading) {
-          const jsonValue = JSON.stringify(inventory);
-          await AsyncStorage.setItem(STORAGE_KEY, jsonValue);
+        const jsonValue = JSON.stringify(inventory);
+        await AsyncStorage.setItem(STORAGE_KEY, jsonValue); // Siempre guarda en local
+
+        if (user) {
+          // Si hay sesión, actualizamos el JSONB en Supabase
+          await supabase
+            .from('profiles')
+            .update({ inventory })
+            .eq('id', user.id);
         }
       } catch (e) {
         console.error("Error guardando datos:", e);
       }
     };
 
-    saveData();
-  }, [inventory, isLoading]);
+    // Usamos un pequeño delay (debounce visual) para no saturar Supabase si toca muchos seguidos
+    const timeoutId = setTimeout(() => {
+      saveData();
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [inventory, isLoading, user]);
+
+  // ... (toggleSticker y decrementSticker se mantienen exactamente igual) ...
+  // const toggleSticker = (id: string) => { /* ... */ };
+  // const decrementSticker = (id: string) => { /* ... */ };
 
   const toggleSticker = (id: string) => {
     setInventory(prev => {
@@ -90,14 +108,8 @@ export const StickerProvider: React.FC<StickerProviderProps> = ({ children }) =>
   );
 };
 
-// 5. Hook personalizado con validación de seguridad
 export const useStickers = (): StickerContextType => {
   const context = useContext(StickerContext);
-
-  // Si context es undefined, significa que no estamos dentro del Provider
-  if (!context) {
-    throw new Error('useStickers debe ser usado dentro de un StickerProvider');
-  }
-
+  if (!context) throw new Error('useStickers debe usarse dentro de StickerProvider');
   return context;
 };

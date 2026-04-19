@@ -1,3 +1,4 @@
+import { AuthProvider } from "@/context/AuthContext";
 import { StickerProvider, useStickers } from "@/context/StickerContext";
 import { Stack } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
@@ -24,8 +25,11 @@ function RootNavigator() {
 
 export default function RootLayout() {
   return (
-    <StickerProvider>
-      <RootNavigator />
-    </StickerProvider>
+    <AuthProvider>
+      <StickerProvider>
+        <RootNavigator />
+      </StickerProvider>
+    </AuthProvider>
+
   );
 }
