@@ -9,6 +9,7 @@ type InventoryType = Record<string, number>;
 interface StickerContextType {
   inventory: InventoryType;
   isLoading: boolean;
+  catalog: any[]; // <--- NUEVO: Guardaremos todos los stickers aquí
   toggleSticker: (id: string) => void;
   decrementSticker: (id: string) => void;
 }
@@ -19,14 +20,56 @@ export const StickerProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth(); // Sabemos si el usuario está logueado
   const [inventory, setInventory] = useState<InventoryType>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [catalog, setCatalog] = useState<any[]>([]); // <--- NUEVO ESTADO
 
   // 1. EFECTO DE CARGA: Decide si lee de local o de Supabase
+  // useEffect(() => {
+  //   const loadData = async () => {
+  //     setIsLoading(true);
+  //     try {
+  //       if (user) {
+  //         // Si hay usuario, leemos desde Supabase (Nube)
+  //         const { data, error } = await supabase
+  //           .from('profiles')
+  //           .select('inventory')
+  //           .eq('id', user.id)
+  //           .single();
+
+  //         if (!error && data?.inventory) {
+  //           setInventory(data.inventory);
+  //           // Backup local por si se queda sin internet
+  //           await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data.inventory));
+  //         }
+  //       } else {
+  //         // Si NO hay usuario (o es anónimo), leemos desde el teléfono
+  //         const jsonValue = await AsyncStorage.getItem(STORAGE_KEY);
+  //         if (jsonValue != null) setInventory(JSON.parse(jsonValue));
+  //       }
+  //     } catch (e) {
+  //       console.error("Error cargando datos:", e);
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   };
+
+  //   loadData();
+  // }, [user]); // Se re-ejecuta si el usuario inicia o cierra sesión
+
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
       try {
+        // 1. Cargar el catálogo completo de figuritas desde Supabase
+        const { data: catalogData, error: catalogError } = await supabase
+          .from('stickers')
+          .select('*');
+
+        if (!catalogError && catalogData) {
+          setCatalog(catalogData);
+        }
+
+        // 2. Cargar el inventario (tu lógica actual)
         if (user) {
-          // Si hay usuario, leemos desde Supabase (Nube)
           const { data, error } = await supabase
             .from('profiles')
             .select('inventory')
@@ -35,11 +78,9 @@ export const StickerProvider = ({ children }: { children: ReactNode }) => {
 
           if (!error && data?.inventory) {
             setInventory(data.inventory);
-            // Backup local por si se queda sin internet
             await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data.inventory));
           }
         } else {
-          // Si NO hay usuario (o es anónimo), leemos desde el teléfono
           const jsonValue = await AsyncStorage.getItem(STORAGE_KEY);
           if (jsonValue != null) setInventory(JSON.parse(jsonValue));
         }
@@ -51,7 +92,8 @@ export const StickerProvider = ({ children }: { children: ReactNode }) => {
     };
 
     loadData();
-  }, [user]); // Se re-ejecuta si el usuario inicia o cierra sesión
+  }, [user]);
+
 
   // 2. EFECTO DE GUARDADO: Guarda en local y, si hay sesión, en la nube
   useEffect(() => {
@@ -82,9 +124,6 @@ export const StickerProvider = ({ children }: { children: ReactNode }) => {
     return () => clearTimeout(timeoutId);
   }, [inventory, isLoading, user]);
 
-  // ... (toggleSticker y decrementSticker se mantienen exactamente igual) ...
-  // const toggleSticker = (id: string) => { /* ... */ };
-  // const decrementSticker = (id: string) => { /* ... */ };
 
   const toggleSticker = (id: string) => {
     setInventory(prev => {
@@ -102,7 +141,7 @@ export const StickerProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <StickerContext.Provider value={{ inventory, isLoading, toggleSticker, decrementSticker }}>
+    <StickerContext.Provider value={{ inventory, isLoading, toggleSticker, decrementSticker, catalog }}>
       {children}
     </StickerContext.Provider>
   );

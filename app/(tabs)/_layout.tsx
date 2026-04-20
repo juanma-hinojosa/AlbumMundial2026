@@ -5,6 +5,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Tabs } from "expo-router";
 import { ActivityIndicator, View } from 'react-native';
 
+
 export default function TabsLayout() {
   const { user, isLoading } = useAuth()
 
@@ -20,14 +21,14 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#2A398D',
+        tabBarActiveTintColor: '#ffffff',
         headerStyle: {
-          backgroundColor: '#25292e',
+          backgroundColor: '#ffffff',
         },
-        headerShadowVisible: false,
-        headerTintColor: '#fff',
+        headerShadowVisible: true,
+        headerTintColor: '#ffffff',
         tabBarStyle: {
-          backgroundColor: '#e7e7e7ff',
+          backgroundColor: 'rgb(0, 0, 0)',
         },
       }}
     >

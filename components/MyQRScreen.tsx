@@ -2,15 +2,15 @@ import ScannerScreen from '@/components/ScannerScreen';
 import { useStickers } from '@/context/StickerContext';
 import { generateQRString } from '@/utils/exchangeLogic';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Modal, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 
 export default function MyQRScreen() {
-  const { inventory } = useStickers();
+  const { inventory, catalog } = useStickers();
 
   // Usamos useMemo para que no recalcule el string en cada render, solo si cambia el inventario
-  const qrData = useMemo(() => generateQRString(inventory), [inventory]);
+  const qrData = useMemo(() => generateQRString(inventory, catalog), [inventory, catalog]);
 
   // Estado para mostrar/ocultar el escaner
   const [showScanner, setShowScanner] = useState(false)
@@ -53,7 +53,7 @@ export default function MyQRScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#007AFF', // Fondo azul mundialista
+    backgroundColor: '#f5f5f5', // Fondo azul mundialista
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -86,13 +86,14 @@ const styles = StyleSheet.create({
   infoText: {
     marginTop: 20,
     fontSize: 12,
-    color: '#888',
+    color: '#000000',
     textAlign: 'center',
     maxWidth: 200
   },
   scanButton: {
+    marginTop: 20,
     flexDirection: 'row',
-    backgroundColor: '#FFD700', // Un color dorado o llamativo
+    backgroundColor: '#d5191e', // Un color dorado o llamativo
     paddingVertical: 15,
     paddingHorizontal: 40,
     borderRadius: 30,
@@ -100,7 +101,8 @@ const styles = StyleSheet.create({
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
-    elevation: 5
+    elevation: 5,
+
   },
-  scanText: { marginLeft: 10, fontSize: 18, fontWeight: 'bold', color: '#333' }
+  scanText: { marginLeft: 10, fontSize: 18, fontWeight: 'bold', color: '#f5f5f5' }
 });

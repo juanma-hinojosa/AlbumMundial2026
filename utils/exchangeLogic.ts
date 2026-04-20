@@ -1,6 +1,8 @@
 import { albumData } from '@/data/albumData';
 
-export const generateQRString = (inventory: InventoryType): string => {
+type InventoryType = Record<string, number>;
+
+export const generateQRString = (inventory: InventoryType, catalog: any[]): string => {
   const needs: string[] = [];
   const swaps: string[] = [];
 
@@ -24,7 +26,7 @@ export const generateQRString = (inventory: InventoryType): string => {
   return `${needString}|${swapString}`;
 };
 
-type InventoryType = Record<string, number>;
+// type InventoryType = Record<string, number>;
 
 
 const findStickerById = (id: string) => {
@@ -35,24 +37,26 @@ const findStickerById = (id: string) => {
   return null;
 };
 
-export const calculateMatch = (qrString: string, myInventory: InventoryType) => {
+
+export const calculateMatch = (qrString: string, myInventory: InventoryType, catalog: any[]) => {
   try {
-    // 1. Desarmar el string "N:A,B|C:C,D"
     const [needPart, swapPart] = qrString.split('|');
     
-    // Extraer los IDs limpios quitando "N:" y "C:"
-    const theirNeeds = needPart.replace('Necesito:', '').split(',').filter(id => id);
-    const theirSwaps = swapPart.replace('Cambio:', '').split(',').filter(id => id);
+    // Extraemos limpiando los prefijos cortos
+    const theirNeeds = needPart.replace('N:', '').split(',').filter(id => id);
+    const theirSwaps = swapPart.replace('C:', '').split(',').filter(id => id);
 
-    // 2. MATCH: LO QUE YO RECIBO (Incoming)
-    // Lógica: Ellos lo cambian (theirSwaps) Y yo lo necesito (myInventory[id] === 0)
     const toReceiveIds = theirSwaps.filter(id => (myInventory[id] || 0) === 0);
-
-    // 3. MATCH: LO QUE YO DOY (Outgoing)
-    // Lógica: Ellos lo necesitan (theirNeeds) Y yo lo tengo repetido (myInventory[id] > 1)
     const toGiveIds = theirNeeds.filter(id => (myInventory[id] || 0) > 1);
 
-    // 4. Convertir IDs a Objetos Bonitos (para mostrar la foto/nombre)
+    // Función buscadora usando la base de datos de Supabase
+    const findStickerById = (id: string) => {
+      const found = catalog.find((s: any) => s.id === id);
+      // Supabase te devuelve 'pais_o_grupo', lo usamos para el renderizado
+      if (found) return { ...found, countryName: found.pais_o_grupo }; 
+      return null;
+    };
+
     return {
       incoming: toReceiveIds.map(findStickerById).filter(Boolean),
       outgoing: toGiveIds.map(findStickerById).filter(Boolean)
@@ -63,3 +67,33 @@ export const calculateMatch = (qrString: string, myInventory: InventoryType) => 
     return { incoming: [], outgoing: [] };
   }
 };
+
+
+// export const calculateMatch = (qrString: string, myInventory: InventoryType) => {
+//   try {
+//     // 1. Desarmar el string "N:A,B|C:C,D"
+//     const [needPart, swapPart] = qrString.split('|');
+    
+//     // Extraer los IDs limpios quitando "N:" y "C:"
+//     const theirNeeds = needPart.replace('Necesito:', '').split(',').filter(id => id);
+//     const theirSwaps = swapPart.replace('Cambio:', '').split(',').filter(id => id);
+
+//     // 2. MATCH: LO QUE YO RECIBO (Incoming)
+//     // Lógica: Ellos lo cambian (theirSwaps) Y yo lo necesito (myInventory[id] === 0)
+//     const toReceiveIds = theirSwaps.filter(id => (myInventory[id] || 0) === 0);
+
+//     // 3. MATCH: LO QUE YO DOY (Outgoing)
+//     // Lógica: Ellos lo necesitan (theirNeeds) Y yo lo tengo repetido (myInventory[id] > 1)
+//     const toGiveIds = theirNeeds.filter(id => (myInventory[id] || 0) > 1);
+
+//     // 4. Convertir IDs a Objetos Bonitos (para mostrar la foto/nombre)
+//     return {
+//       incoming: toReceiveIds.map(findStickerById).filter(Boolean),
+//       outgoing: toGiveIds.map(findStickerById).filter(Boolean)
+//     };
+
+//   } catch (error) {
+//     console.error("Error leyendo QR", error);
+//     return { incoming: [], outgoing: [] };
+//   }
+// };

@@ -10,7 +10,7 @@ export default function ScannerScreen({ onClose }: { onClose: () => void }) {
   const [scanned, setScanned] = useState(false);
   const [matchResult, setMatchResult] = useState<any>(null);
 
-  const { inventory, toggleSticker, decrementSticker } = useStickers();
+  const { inventory, catalog, toggleSticker, decrementSticker } = useStickers();
 
   if (!permission) return <View />;
 
@@ -25,15 +25,16 @@ export default function ScannerScreen({ onClose }: { onClose: () => void }) {
     )
   }
 
+
   const handleBarCodeScanned = ({ data }: { data: string }) => {
     setScanned(true);
     try {
-      const result = calculateMatch(data, inventory);
-      // Validamos que result no sea null antes de guardarlo
+      // Le pasamos el catalog como tercer parámetro
+      const result = calculateMatch(data, inventory, catalog);
+
       if (result) {
         setMatchResult(result);
       } else {
-        // Si el QR no es válido, mostramos error o reiniciamos
         alert("QR Inválido");
         setScanned(false);
       }
@@ -43,13 +44,31 @@ export default function ScannerScreen({ onClose }: { onClose: () => void }) {
     }
   };
 
+  // const handleBarCodeScanned = ({ data }: { data: string }) => {
+  //   setScanned(true);
+  //   try {
+  //     const result = calculateMatch(data, inventory);
+  //     // Validamos que result no sea null antes de guardarlo
+  //     if (result) {
+  //       setMatchResult(result);
+  //     } else {
+  //       // Si el QR no es válido, mostramos error o reiniciamos
+  //       alert("QR Inválido");
+  //       setScanned(false);
+  //     }
+  //   } catch (e) {
+  //     console.error(e);
+  //     setScanned(false);
+  //   }
+  // };
+
   const confirmExchange = () => {
-   // PROTECCIÓN: Si matchResult es null, no hacemos nada
+    // PROTECCIÓN: Si matchResult es null, no hacemos nada
     if (!matchResult) return;
 
     // Usamos ?. para evitar crashes si incoming/outgoing no existen
     matchResult.incoming?.forEach((s: any) => toggleSticker(s.id));
-    matchResult.outgoing?.forEach((s: any) => decrementSticker(s.id));matchResult.outgoing.forEach((s: any) => decrementSticker(s.id));
+    matchResult.outgoing?.forEach((s: any) => decrementSticker(s.id)); matchResult.outgoing.forEach((s: any) => decrementSticker(s.id));
 
     alert('¡Intercambio realizado con éxito!');
     onClose(); // Cerramos el escáner
@@ -85,8 +104,8 @@ export default function ScannerScreen({ onClose }: { onClose: () => void }) {
         <View style={styles.actions}>
           <Button title="Confirmar Intercambio" onPress={confirmExchange} />
           <Button title="Escanear de nuevo" onPress={() => {
-             setScanned(false);
-             setMatchResult(null); // Limpiamos el resultado anterior
+            setScanned(false);
+            setMatchResult(null); // Limpiamos el resultado anterior
           }} color="gray" />
           <Button title="Cancelar" onPress={onClose} color="red" />
         </View>

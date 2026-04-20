@@ -243,10 +243,11 @@ export const StickerGrid = ({ filterType = 'all' }: StickerGridProps) => {
 
 const styles = StyleSheet.create({
   groupTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
     marginTop: 15,
     marginLeft: 10,
+    fontSize: 22,
+    fontWeight: 'bold',
+    
   },
   header: {
     backgroundColor: '#f4f4f4',
