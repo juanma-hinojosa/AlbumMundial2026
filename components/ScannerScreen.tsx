@@ -18,9 +18,19 @@ export default function ScannerScreen({ onClose }: { onClose: () => void }) {
   if (!permission.granted) {
     return (
       <View style={styles.container}>
-        <Text style={{ textAlign: 'center', marginBottom: 10 }}>Necesitamos permiso para usar la cámara</Text>
-        <Button onPress={requestPermission} title="Dar Permiso" />
-        <Button onPress={onClose} title="Cancelar" color="red" />
+        <View style={styles.containerButtons}>
+          <Text style={{ textAlign: 'center', marginBottom: 10, color: "#f5f5f5" }}>Necesitamos permiso para usar la cámara</Text>
+          {/* <Button style={styles.buttonWhite} onPress={requestPermission} title="Dar Permiso" />
+          <Button style={styles.buttonWhiteBorder} onPress={onClose} title="Cancelar" /> */}
+
+          <TouchableOpacity style={styles.buttonWhite} onPress={requestPermission}>
+            <Text style={styles.buttonWhiteText}>Dar Permiso</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.buttonWhiteBorder} onPress={onClose}>
+            <Text style={styles.buttonWhiteBorderText}>Cancelar</Text>
+          </TouchableOpacity>
+        </View>
+
       </View>
     )
   }
@@ -136,7 +146,12 @@ export default function ScannerScreen({ onClose }: { onClose: () => void }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center' },
+  container: { flex: 1, justifyContent: 'center', padding: 20 },
+  containerButtons: { backgroundColor: 'rgb(0, 0, 0)', color: "#f5f5f5", padding: 20, borderRadius: 10 },
+  buttonWhite: { backgroundColor: '#f5f5f5', padding: 12, borderRadius: 8, marginBottom: 10 },
+  buttonWhiteText: { color: '#000', textAlign: 'center', fontWeight: 'bold' },
+  buttonWhiteBorder: { padding: 12, borderRadius: 8, borderWidth: 1, borderColor: '#f5f5f5' },
+  buttonWhiteBorderText: { color: '#f5f5f5', textAlign: 'center' },
   camera: { flex: 1 },
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.2)', justifyContent: 'center', alignItems: 'center' },
   overlayText: { color: 'white', fontSize: 18, marginTop: 200, fontWeight: 'bold' },
