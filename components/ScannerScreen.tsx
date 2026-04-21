@@ -3,12 +3,14 @@ import { calculateMatch } from "@/utils/exchangeLogic";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useState } from "react";
-import { Button, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Button, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function ScannerScreen({ onClose }: { onClose: () => void }) {
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [matchResult, setMatchResult] = useState<any>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
 
   const { inventory, catalog, toggleSticker, decrementSticker } = useStickers();
 
@@ -26,21 +28,30 @@ export default function ScannerScreen({ onClose }: { onClose: () => void }) {
   }
 
 
-  const handleBarCodeScanned = ({ data }: { data: string }) => {
+  const handleBarCodeScanned = async ({ data }: { data: string }) => {
     setScanned(true);
-    try {
-      // Le pasamos el catalog como tercer parámetro
-      const result = calculateMatch(data, inventory, catalog);
+    setIsProcessing(true);
+    setScanError(null);
 
-      if (result) {
+    try {
+      // calculateMatch is now async
+      const result = await calculateMatch(data, inventory, catalog);
+
+      if (result.error) {
+        setScanError(result.error);
+        setScanned(false);
+      } else if (result && (result.incoming?.length > 0 || result.outgoing?.length > 0)) {
         setMatchResult(result);
       } else {
-        alert("QR Inválido");
+        setScanError("No se encontraron intercambios posibles");
         setScanned(false);
       }
     } catch (e) {
-      console.error(e);
+      console.error('Error processing QR:', e);
+      setScanError("Error al procesar el código QR");
       setScanned(false);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -74,8 +85,41 @@ export default function ScannerScreen({ onClose }: { onClose: () => void }) {
     onClose(); // Cerramos el escáner
   }
 
+  // Show processing state
+  if (isProcessing) {
+    return (
+      <View style={styles.processingContainer}>
+        <ActivityIndicator size="large" color="#2A398D" />
+        <Text style={styles.processingText}>Procesando código QR...</Text>
+        <Button title="Cancelar" onPress={() => {
+          setIsProcessing(false);
+          setScanned(false);
+          onClose();
+        }} color="red" />
+      </View>
+    );
+  }
+
+  // Show error state
+  if (scanned && scanError) {
+    return (
+      <View style={styles.errorContainer}>
+        <Ionicons name="alert-circle" size={60} color="#d5191e" />
+        <Text style={styles.errorTitle}>Error al escanear</Text>
+        <Text style={styles.errorMessage}>{scanError}</Text>
+        <View style={styles.errorActions}>
+          <Button title="Intentar de nuevo" onPress={() => {
+            setScanned(false);
+            setScanError(null);
+          }} />
+          <Button title="Cancelar" onPress={onClose} color="red" />
+        </View>
+      </View>
+    );
+  }
+
   // Renderizado del resultado: Verificamos que incoming exista
-  const hasMatchData = scanned && matchResult && matchResult.incoming;
+  const hasMatchData = scanned && matchResult && !scanError;
 
   // Renderizado del resultado del Match
   if (hasMatchData) {
@@ -128,7 +172,14 @@ export default function ScannerScreen({ onClose }: { onClose: () => void }) {
           <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
             <Ionicons name="close" size={30} color="white" />
           </TouchableOpacity>
+          <View style={styles.scanFrame}>
+            <View style={[styles.corner, styles.topLeft]} />
+            <View style={[styles.corner, styles.topRight]} />
+            <View style={[styles.corner, styles.bottomLeft]} />
+            <View style={[styles.corner, styles.bottomRight]} />
+          </View>
           <Text style={styles.overlayText}>Apunta al QR de tu amigo</Text>
+          <Text style={styles.overlaySubtext}>Compatible con códigos antiguos y nuevos</Text>
         </View>
       </CameraView>
     </View>
@@ -140,7 +191,97 @@ const styles = StyleSheet.create({
   camera: { flex: 1 },
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.2)', justifyContent: 'center', alignItems: 'center' },
   overlayText: { color: 'white', fontSize: 18, marginTop: 200, fontWeight: 'bold' },
-  closeBtn: { position: 'absolute', top: 50, right: 20, padding: 10, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 20 },
+  closeBtn: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    padding: 10,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 20
+  },
+  scanFrame: {
+    width: 250,
+    height: 250,
+    position: 'relative',
+    marginTop: -100
+  },
+  corner: {
+    position: 'absolute',
+    width: 20,
+    height: 20,
+    borderColor: '#fff',
+    borderWidth: 3
+  },
+  topLeft: {
+    top: 0,
+    left: 0,
+    borderRightWidth: 0,
+    borderBottomWidth: 0
+  },
+  topRight: {
+    top: 0,
+    right: 0,
+    borderLeftWidth: 0,
+    borderBottomWidth: 0
+  },
+  bottomLeft: {
+    bottom: 0,
+    left: 0,
+    borderRightWidth: 0,
+    borderTopWidth: 0
+  },
+  bottomRight: {
+    bottom: 0,
+    right: 0,
+    borderLeftWidth: 0,
+    borderTopWidth: 0
+  },
+  overlaySubtext: {
+    color: 'white',
+    fontSize: 14,
+    marginTop: 10,
+    textAlign: 'center',
+    opacity: 0.8
+  },
+  processingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    padding: 20
+  },
+  processingText: {
+    marginTop: 20,
+    fontSize: 16,
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 20
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    padding: 20
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#d5191e',
+    marginTop: 15,
+    marginBottom: 10
+  },
+  errorMessage: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 22
+  },
+  errorActions: {
+    flexDirection: 'row',
+    gap: 15
+  },
 
   // Estilos del Resultado
   resultContainer: { flex: 1, padding: 20, backgroundColor: 'white', justifyContent: 'center' },
@@ -148,5 +289,8 @@ const styles = StyleSheet.create({
   section: { marginBottom: 20 },
   subTitle: { fontSize: 18, fontWeight: '600', marginBottom: 10 },
   stickerBadge: { padding: 8, backgroundColor: '#eee', marginRight: 5, borderRadius: 5, overflow: 'hidden' },
-  actions: { gap: 10, marginTop: 20 }
+  actions: {
+    gap: 10,
+    marginTop: 20
+  }
 });

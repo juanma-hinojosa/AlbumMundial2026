@@ -1,35 +1,44 @@
 import { AuthProvider } from "@/context/AuthContext";
 import { StickerProvider, useStickers } from "@/context/StickerContext";
+import ErrorBoundary from '@/components/ErrorBoundary';
+import LoadingSpinner from '@/components/LoadingSpinner';
 import { Stack } from "expo-router";
-import { ActivityIndicator, View } from "react-native";
+import { StatusBar } from 'expo-status-bar';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 // Creamos un componente intermedio que verifique la carga
 function RootNavigator() {
   const { isLoading } = useStickers();
 
   if (isLoading) {
-    // Muestra un spinner mientras carga los datos del teléfono
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#007AFF" />
-      </View>
+      <LoadingSpinner
+        message="Cargando tu álbum..."
+        size="large"
+        style={{ backgroundColor: '#f8f9fa' }}
+      />
     );
   }
 
   return (
-    <Stack>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-    </Stack>
+    <Animated.View entering={FadeIn.duration(400)} style={{ flex: 1 }}>
+      <Stack>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="+not-found" />
+      </Stack>
+      <StatusBar style="auto" translucent backgroundColor="transparent" />
+    </Animated.View>
   );
 }
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <StickerProvider>
-        <RootNavigator />
-      </StickerProvider>
-    </AuthProvider>
-
+    <ErrorBoundary>
+      <AuthProvider>
+        <StickerProvider>
+          <RootNavigator />
+        </StickerProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }

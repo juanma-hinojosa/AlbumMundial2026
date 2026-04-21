@@ -1,9 +1,12 @@
 import { useAuth } from '@/context/AuthContext';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Tabs } from "expo-router";
-import { ActivityIndicator, View } from 'react-native';
+import { View } from 'react-native';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
 
 export default function TabsLayout() {
@@ -11,27 +14,56 @@ export default function TabsLayout() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#e7e7e7ff' }}>
-        <ActivityIndicator size="large" color="#2A398D" />
-      </View>
+      <Animated.View
+        entering={FadeIn.duration(300)}
+        exiting={FadeOut.duration(200)}
+        style={{ flex: 1, backgroundColor: '#f8f9fa' }}
+      >
+        <LoadingSpinner
+          message="Iniciando aplicación..."
+          size="large"
+        />
+      </Animated.View>
     );
   }
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: '#ffffff',
-        headerStyle: {
-          backgroundColor: '#ffffff',
-        },
-        headerShadowVisible: true,
-        headerTintColor: '#ffffff',
-        tabBarStyle: {
-          backgroundColor: 'rgb(0, 0, 0)',
-        },
-      }}
-    >
+    <ErrorBoundary>
+      <Animated.View
+        entering={FadeIn.duration(500)}
+        style={{ flex: 1 }}
+      >
+        <Tabs
+          screenOptions={{
+            headerShown: false,
+            tabBarActiveTintColor: '#ffffff',
+            headerStyle: {
+              backgroundColor: '#ffffff',
+            },
+            headerShadowVisible: true,
+            headerTintColor: '#ffffff',
+            tabBarStyle: {
+              backgroundColor: 'rgb(0, 0, 0)',
+              borderTopWidth: 0,
+              elevation: 8,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: -2 },
+              shadowOpacity: 0.1,
+              shadowRadius: 8,
+              paddingBottom: 4,
+              paddingTop: 4,
+              height: 60,
+            },
+            tabBarLabelStyle: {
+              fontSize: 11,
+              fontWeight: '600',
+              marginBottom: 4,
+            },
+            tabBarIconStyle: {
+              marginTop: 2,
+            }
+          }}
+        >
       <Tabs.Screen name="index" options={{
         title: 'Home',
         tabBarIcon: ({ color, focused }) => (
@@ -71,6 +103,8 @@ export default function TabsLayout() {
         }}
       />
 
-    </Tabs>
+        </Tabs>
+      </Animated.View>
+    </ErrorBoundary>
   )
 }

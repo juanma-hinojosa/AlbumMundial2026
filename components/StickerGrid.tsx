@@ -2,8 +2,12 @@ import { useStickers } from '@/context/StickerContext';
 import { supabase } from '@/utils/supabase';
 import { Image } from 'expo-image';
 import { useEffect, useState } from 'react';
-import { SectionList, StyleSheet, Text, View } from 'react-native';
+import { SectionList, StyleSheet, Text, View, Platform, Dimensions } from 'react-native';
 import { StickerItem } from './stickerItem';
+import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated';
+import Ionicons from '@expo/vector-icons/Ionicons';
+
+const { width: screenWidth } = Dimensions.get('window');
 
 type FilterType = 'all' | 'missing' | 'repeated';
 
@@ -202,38 +206,66 @@ export const StickerGrid = ({ filterType = 'all' }: StickerGridProps) => {
       keyExtractor={(item, index) => index.toString()}
 
       renderSectionHeader={({ section }) => (
-        <Text style={styles.groupTitle}>{section.title}</Text>
+        <Animated.View
+          entering={FadeInUp.duration(400)}
+          style={styles.groupHeaderContainer}
+        >
+          <View style={styles.groupHeader}>
+            <View style={styles.groupIconContainer}>
+              <Text style={styles.groupIcon}>
+                {section.title.includes('Grupo') ? '🏆' :
+                 section.title.includes('FIFA') ? '⭐' : '🥤'}
+              </Text>
+            </View>
+            <Text style={styles.groupTitle}>{section.title}</Text>
+          </View>
+          <View style={styles.groupDivider} />
+        </Animated.View>
       )}
 
-      renderItem={({ item }) => (
-        <View>
-          {/* 🇦🇷 PAIS */}
+      renderItem={({ item, index }) => (
+        <Animated.View
+          entering={FadeInDown.delay(index * 50).duration(400)}
+          style={styles.countrySection}
+        >
+          {/* Country Header */}
           {item.country !== 'FWC' && item.country !== 'CC' && (
-            <View style={styles.header}>
-              <Image
-                style={{ width: 65, height: 40 }}
-                source={{
-                  uri: `https://flagcdn.com/w320/${flagMap[item.country] || item.country?.toLowerCase()}.png`,
-                }}
-              />
-              <Text style={styles.headerTitle}>{item.country}</Text>
+            <View style={styles.countryHeader}>
+              <View style={styles.flagContainer}>
+                <Image
+                  style={styles.flagImage}
+                  source={{
+                    uri: `https://flagcdn.com/w320/${flagMap[item.country] || item.country?.toLowerCase()}.png`,
+                  }}
+                />
+              </View>
+              <Text style={styles.countryTitle}>{item.country}</Text>
+              <View style={styles.countryStats}>
+                <Text style={styles.countryStatsText}>
+                  {item.stickers.length} stickers
+                </Text>
+              </View>
             </View>
           )}
 
-          {/* 🟩 STICKERS */}
-          <View style={styles.stickersContainer}>
-            {item.stickers.map((sticker: any) => (
-              <View key={sticker.id} style={styles.gridItem}>
+          {/* Stickers Grid */}
+          <View style={styles.stickersGrid}>
+            {item.stickers.map((sticker: any, stickerIndex: number) => (
+              <Animated.View
+                key={sticker.id}
+                entering={FadeInUp.delay((index * 50) + (stickerIndex * 25)).duration(300)}
+                style={styles.stickerWrapper}
+              >
                 <StickerItem
                   item={sticker}
                   quantity={inventory[sticker.id]}
                   onToggle={() => toggleSticker(sticker.id)}
                   onDecrement={() => decrementSticker(sticker.id)}
                 />
-              </View>
+              </Animated.View>
             ))}
           </View>
-        </View>
+        </Animated.View>
       )}
 
       contentContainerStyle={{ paddingBottom: 80 }}
@@ -241,33 +273,128 @@ export const StickerGrid = ({ filterType = 'all' }: StickerGridProps) => {
   );
 };
 
+// Calculate responsive grid dimensions
+const getGridDimensions = () => {
+  const isWeb = Platform.OS === 'web';
+  const padding = 32; // Total horizontal padding from container
+  const cardPadding = 32; // Padding inside each card
+  const gap = 6; // Gap between items
+
+  let columns;
+  if (isWeb) {
+    if (screenWidth > 1200) columns = 12;
+    else if (screenWidth > 900) columns = 10;
+    else if (screenWidth > 600) columns = 8;
+    else columns = 6;
+  } else {
+    // Better mobile calculations
+    if (screenWidth >= 430) columns = 5;      // iPhone 14 Pro Max, larger phones
+    else if (screenWidth >= 390) columns = 4; // iPhone 14 Pro, iPhone 12/13
+    else if (screenWidth >= 375) columns = 4; // iPhone SE, smaller iPhones
+    else columns = 3; // Very small screens
+  }
+
+  const availableWidth = screenWidth - padding - cardPadding;
+  const itemWidth = (availableWidth - (gap * (columns - 1))) / columns;
+  return { columns, itemWidth, gap };
+};
+
+const { columns, itemWidth, gap } = getGridDimensions();
+
 const styles = StyleSheet.create({
-  groupTitle: {
-    marginTop: 15,
-    marginLeft: 10,
-    fontSize: 22,
-    fontWeight: 'bold',
-    
+  groupHeaderContainer: {
+    marginTop: Platform.OS === 'web' ? 24 : 16,
+    marginBottom: Platform.OS === 'web' ? 16 : 12,
+    paddingHorizontal: Platform.OS === 'web' ? 16 : 12,
   },
-  header: {
-    backgroundColor: '#f4f4f4',
-    padding: 10,
-    marginTop: 10,
+  groupHeader: {
     flexDirection: 'row',
-    alignItems: 'center'
+    alignItems: 'center',
+    marginBottom: 8,
   },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginLeft: 15
+  groupIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(42, 57, 141, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
-  stickersContainer: {
+  groupIcon: {
+    fontSize: 20,
+  },
+  groupTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#1a1a2e',
+    flex: 1,
+  },
+  groupDivider: {
+    height: 2,
+    backgroundColor: 'rgba(42, 57, 141, 0.1)',
+    borderRadius: 1,
+  },
+  countrySection: {
+    marginBottom: Platform.OS === 'web' ? 24 : 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    marginHorizontal: Platform.OS === 'web' ? 16 : 12,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  countryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: 'rgba(248, 249, 250, 0.8)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(26, 26, 46, 0.1)',
+  },
+  flagContainer: {
+    width: 56,
+    height: 36,
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginRight: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  flagImage: {
+    width: '100%',
+    height: '100%',
+  },
+  countryTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1a1a2e',
+    flex: 1,
+  },
+  countryStats: {
+    backgroundColor: 'rgba(42, 57, 141, 0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  countryStatsText: {
+    fontSize: 12,
+    color: '#2A398D',
+    fontWeight: '600',
+  },
+  stickersGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: 5
+    padding: Platform.OS === 'web' ? 16 : 12,
+    gap: gap,
+    justifyContent: 'flex-start',
   },
-  gridItem: {
-    width: '20%',
-    padding: 4
-  }
+  stickerWrapper: {
+    width: itemWidth,
+  },
 });
