@@ -28,50 +28,59 @@ export default function ScannerScreen({ onClose }: { onClose: () => void }) {
   }
 
 
+  // const handleBarCodeScanned = async ({ data }: { data: string }) => {
+  //   setScanned(true);
+  //   setIsProcessing(true);
+  //   setScanError(null);
+
+  //   try {
+  //     // calculateMatch is now async
+  //     const result = await calculateMatch(data, inventory, catalog);
+
+  //     if (result.error) {
+  //       setScanError(result.error);
+  //       setScanned(false);
+  //     } else if (result && (result.incoming?.length > 0 || result.outgoing?.length > 0)) {
+  //       setMatchResult(result);
+  //       console.log(matchResult)
+  //     } else {
+  //       setScanError("No se encontraron intercambios posibles");
+  //       setScanned(false);
+  //     }
+  //   } catch (e) {
+  //     console.error('Error processing QR:', e);
+  //     setScanError("Error al procesar el código QR");
+  //     setScanned(false);
+  //   } finally {
+  //     setIsProcessing(false);
+  //   }
+  // };
+
   const handleBarCodeScanned = async ({ data }: { data: string }) => {
     setScanned(true);
     setIsProcessing(true);
     setScanError(null);
 
     try {
-      // calculateMatch is now async
       const result = await calculateMatch(data, inventory, catalog);
+      console.log("🔍 Resultado crudo del match:", result); // ESTE es el log que importa
 
       if (result.error) {
         setScanError(result.error);
         setScanned(false);
       } else if (result && (result.incoming?.length > 0 || result.outgoing?.length > 0)) {
-        setMatchResult(result);
+        setMatchResult(result); // Aquí actualizamos el estado para la pantalla
       } else {
-        setScanError("No se encontraron intercambios posibles");
+        setScanError("No se encontraron intercambios posibles (quizás ya tienes lo que el otro ofrece)");
         setScanned(false);
       }
     } catch (e) {
-      console.error('Error processing QR:', e);
-      setScanError("Error al procesar el código QR");
+      setScanError("Error crítico al procesar");
       setScanned(false);
     } finally {
       setIsProcessing(false);
     }
   };
-
-  // const handleBarCodeScanned = ({ data }: { data: string }) => {
-  //   setScanned(true);
-  //   try {
-  //     const result = calculateMatch(data, inventory);
-  //     // Validamos que result no sea null antes de guardarlo
-  //     if (result) {
-  //       setMatchResult(result);
-  //     } else {
-  //       // Si el QR no es válido, mostramos error o reiniciamos
-  //       alert("QR Inválido");
-  //       setScanned(false);
-  //     }
-  //   } catch (e) {
-  //     console.error(e);
-  //     setScanned(false);
-  //   }
-  // };
 
   const confirmExchange = () => {
     // PROTECCIÓN: Si matchResult es null, no hacemos nada
@@ -122,6 +131,41 @@ export default function ScannerScreen({ onClose }: { onClose: () => void }) {
   const hasMatchData = scanned && matchResult && !scanError;
 
   // Renderizado del resultado del Match
+  // if (hasMatchData) {
+  //   return (
+  //     <View style={styles.resultContainer}>
+  //       <Text style={styles.matchTitle}>¡Resultado del cruce!</Text>
+
+  //       <View style={styles.section}>
+  //         <Text style={styles.subTitle}>🟢 Recibes ({matchResult.incoming?.length || 0})</Text>
+  //         <FlatList
+  //           data={matchResult.incoming || []} // Array vacío por defecto
+  //           horizontal
+  //           renderItem={({ item }) => <Text style={styles.stickerBadge}>{item.id}</Text>}
+  //         />
+  //       </View>
+
+  //       <View style={styles.section}>
+  //         <Text style={styles.subTitle}>🔴 Entregas ({matchResult.outgoing?.length || 0})</Text>
+  //         <FlatList
+  //           data={matchResult.outgoing || []} // Array vacío por defecto
+  //           horizontal
+  //           renderItem={({ item }) => <Text style={styles.stickerBadge}>{item.id}</Text>}
+  //         />
+  //       </View>
+
+  //       <View style={styles.actions}>
+  //         <Button title="Confirmar Intercambio" onPress={confirmExchange} />
+  //         <Button title="Escanear de nuevo" onPress={() => {
+  //           setScanned(false);
+  //           setMatchResult(null); // Limpiamos el resultado anterior
+  //         }} color="gray" />
+  //         <Button title="Cancelar" onPress={onClose} color="red" />
+  //       </View>
+  //     </View>
+  //   );
+  // }
+
   if (hasMatchData) {
     return (
       <View style={styles.resultContainer}>
@@ -130,27 +174,45 @@ export default function ScannerScreen({ onClose }: { onClose: () => void }) {
         <View style={styles.section}>
           <Text style={styles.subTitle}>🟢 Recibes ({matchResult.incoming?.length || 0})</Text>
           <FlatList
-            data={matchResult.incoming || []} // Array vacío por defecto
+            data={matchResult.incoming || []}
             horizontal
-            renderItem={({ item }) => <Text style={styles.stickerBadge}>{item.id}</Text>}
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item) => `incoming-${item.id}`} // Importante para el rendimiento
+            renderItem={({ item }) => (
+              <View style={styles.stickerCard}>
+                <Text style={styles.stickerBadge}>{item.codigo}</Text>
+                <Text style={styles.stickerCountry}>{item.pais_o_grupo}</Text>
+              </View>
+            )}
           />
         </View>
 
         <View style={styles.section}>
           <Text style={styles.subTitle}>🔴 Entregas ({matchResult.outgoing?.length || 0})</Text>
           <FlatList
-            data={matchResult.outgoing || []} // Array vacío por defecto
+            data={matchResult.outgoing || []}
             horizontal
-            renderItem={({ item }) => <Text style={styles.stickerBadge}>{item.id}</Text>}
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item) => `outgoing-${item.id}`}
+            renderItem={({ item }) => (
+              <View style={[styles.stickerCard, { borderColor: '#FF6B6B' }]}>
+                <Text style={[styles.stickerBadge, { color: '#FF6B6B' }]}>{item.codigo}</Text>
+                <Text style={styles.stickerCountry}>{item.pais_o_grupo}</Text>
+              </View>
+            )}
           />
         </View>
 
         <View style={styles.actions}>
-          <Button title="Confirmar Intercambio" onPress={confirmExchange} />
+          <TouchableOpacity style={styles.confirmBtn} onPress={confirmExchange}>
+            <Text style={styles.confirmBtnText}>Confirmar Intercambio</Text>
+          </TouchableOpacity>
+
           <Button title="Escanear de nuevo" onPress={() => {
             setScanned(false);
-            setMatchResult(null); // Limpiamos el resultado anterior
+            setMatchResult(null);
           }} color="gray" />
+
           <Button title="Cancelar" onPress={onClose} color="red" />
         </View>
       </View>
@@ -283,12 +345,45 @@ const styles = StyleSheet.create({
     gap: 15
   },
 
+  stickerCard: {
+    backgroundColor: '#f0f0f0',
+    padding: 10,
+    marginRight: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#4ECDC4',
+    alignItems: 'center',
+    minWidth: 80,
+  },
+  stickerBadge: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    color: '#2A398D',
+  },
+  stickerCountry: {
+    fontSize: 10,
+    color: '#666',
+    textTransform: 'uppercase',
+  },
+  confirmBtn: {
+    backgroundColor: '#2A398D',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+    alignItems: 'center',
+  },
+  confirmBtnText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+
   // Estilos del Resultado
   resultContainer: { flex: 1, padding: 20, backgroundColor: 'white', justifyContent: 'center' },
   matchTitle: { fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 20 },
   section: { marginBottom: 20 },
   subTitle: { fontSize: 18, fontWeight: '600', marginBottom: 10 },
-  stickerBadge: { padding: 8, backgroundColor: '#eee', marginRight: 5, borderRadius: 5, overflow: 'hidden' },
+  // stickerBadge: { padding: 8, backgroundColor: '#eee', marginRight: 5, borderRadius: 5, overflow: 'hidden' },
   actions: {
     gap: 10,
     marginTop: 20

@@ -1,4 +1,4 @@
-import { albumData } from '@/data/albumData';
+// import { albumData } from '@/data/albumData';
 import { supabase } from './supabase';
 
 type InventoryType = Record<string, number>;
@@ -23,41 +23,35 @@ export async function createSharingSession(
     const needs: string[] = [];
     const swaps: string[] = [];
 
-    // Calculate needs and swaps
-    albumData.forEach(country => {
-      country.stickers.forEach(sticker => {
-        const count = inventory[sticker.id] || 0;
-        if (count === 0) {
-          needs.push(sticker.id);
-        } else if (count > 1) {
-          swaps.push(sticker.id);
-        }
-      });
+    // Usamos el catálogo real de la base de datos
+    catalog.forEach(sticker => {
+      // const count = inventory[sticker.id] || 0;
+      // En lugar de: inventory[sticker.id]
+      // Usa:
+      const count = inventory[String(sticker.id)] || 0;
+      if (count === 0) {
+        needs.push(sticker.id);
+      } else if (count > 1) {
+        swaps.push(sticker.id);
+      }
     });
 
-    // Generate unique share code (retry if collision)
     let shareCode: string;
     let attempts = 0;
     do {
       shareCode = generateShareCode();
       attempts++;
-
-      // Check if code already exists
-      const { data: existing } = await supabase
+      const { data: existing, error: fetchError } = await supabase
         .from('sharing_sessions')
         .select('share_code')
         .eq('share_code', shareCode)
-        .single();
+        .maybeSingle()
 
       if (!existing) break;
-    } while (attempts < 5); // Max 5 attempts to avoid infinite loop
+    } while (attempts < 5);
 
-    if (attempts >= 5) {
-      console.error('Unable to generate unique share code');
-      return null;
-    }
+    if (attempts >= 5) return null;
 
-    // Insert sharing session
     const { error } = await supabase
       .from('sharing_sessions')
       .insert({
@@ -67,10 +61,7 @@ export async function createSharingSession(
         swaps
       });
 
-    if (error) {
-      console.error('Error creating sharing session:', error);
-      return null;
-    }
+    if (error) throw error;
 
     return shareCode;
   } catch (error) {
@@ -90,8 +81,7 @@ export async function fetchSharingSession(shareCode: string): Promise<{
       .select('needs, swaps')
       .eq('share_code', shareCode)
       .gt('expires_at', new Date().toISOString())
-      .single();
-
+      .maybeSingle(); // <--- USA ESTE
     if (error || !data) {
       console.error('Error fetching sharing session:', error);
       return null;
@@ -107,122 +97,93 @@ export async function fetchSharingSession(shareCode: string): Promise<{
   }
 }
 
-// Legacy function - kept for backward compatibility
+
 export const generateQRString = (inventory: InventoryType, catalog: any[]): string => {
   const needs: string[] = [];
   const swaps: string[] = [];
 
-  albumData.forEach(country => {
-    country.stickers.forEach(sticker => {
-      const count = inventory[sticker.id] || 0;
-
-      if (count === 0) {
-        needs.push(sticker.id);
-      } else if (count > 1) {
-        swaps.push(sticker.id)
-      }
-    });
+  catalog.forEach(sticker => {
+    // const count = inventory[sticker.id] || 0;
+    // En lugar de: inventory[sticker.id]
+    // Usa:
+    const count = inventory[String(sticker.id)] || 0;
+    if (count === 0) {
+      needs.push(sticker.id);
+    } else if (count > 1) {
+      swaps.push(sticker.id);
+    }
   });
 
-  const needString = `Necesito: ${needs.join(',')}`;
-  const swapString = `Cambio: ${swaps.join(',')}`;
-
-  return `${needString}|${swapString}`;
+  return `Necesito: ${needs.join(',')}|Cambio: ${swaps.join(',')}`;
 };
-
-// New compact QR generation using share codes
-export async function generateCompactQR(
-  inventory: InventoryType,
-  catalog: any[],
-  userId?: string | null
-): Promise<string | null> {
-  const shareCode = await createSharingSession(inventory, catalog, userId);
-  return shareCode;
-}
 
 // type InventoryType = Record<string, number>;
 
 
 // Helper function for legacy support
-const findStickerById = (id: string) => {
-  for (const country of albumData) {
-    const found = country.stickers.find(s => s.id === id);
-    if (found) return { ...found, countryName: country.name };
-  }
-  return null;
-};
+// const findStickerById = (id: string) => {
+//   for (const country of albumData) {
+//     const found = country.stickers.find(s => s.id === id);
+//     if (found) return { ...found, countryName: country.name };
+//   }
+//   return null;
+// };
 
 
-// Updated calculateMatch to handle both legacy QR codes and new share codes
+
+
+
+export async function generateCompactQR(
+  inventory: InventoryType,
+  catalog: any[],
+  userId?: string | null
+): Promise<string | null> {
+  return await createSharingSession(inventory, catalog, userId);
+}
+
+// --- CÁLCULO DE MATCH CORREGIDO ---
 export const calculateMatch = async (qrString: string, myInventory: InventoryType, catalog: any[]) => {
   try {
     let theirNeeds: string[] = [];
     let theirSwaps: string[] = [];
 
-    // Check if it's a share code (8 characters, alphanumeric) or legacy format
     if (qrString.length === 8 && /^[A-Z0-9]+$/.test(qrString)) {
-      // New format: fetch from sharing session
       const sessionData = await fetchSharingSession(qrString);
       if (!sessionData) {
-        console.error('Invalid or expired share code');
-        return { incoming: [], outgoing: [], error: 'Invalid or expired QR code' };
+        return { incoming: [], outgoing: [], error: 'Código no encontrado o expirado' };
       }
       theirNeeds = sessionData.needs;
       theirSwaps = sessionData.swaps;
     } else {
-      // Legacy format: parse the old string format
       const [needPart, swapPart] = qrString.split('|');
-      theirNeeds = needPart.replace('Necesito: ', '').split(',').filter(id => id);
-      theirSwaps = swapPart.replace('Cambio: ', '').split(',').filter(id => id);
+      theirNeeds = needPart?.replace('Necesito: ', '').split(',').filter(id => id) || [];
+      theirSwaps = swapPart?.replace('Cambio: ', '').split(',').filter(id => id) || [];
     }
 
+    // Lo que ellos tienen repetido y a mí me falta
     const toReceiveIds = theirSwaps.filter(id => (myInventory[id] || 0) === 0);
+
+    // Lo que a ellos les falta y yo tengo repetido
     const toGiveIds = theirNeeds.filter(id => (myInventory[id] || 0) > 1);
 
-    // Function to find sticker details
-    const findStickerById = (id: string) => {
+    const findSticker = (id: string) => {
       const found = catalog.find((s: any) => s.id === id);
-      if (found) return { ...found, countryName: found.pais_o_grupo };
+      if (found) {
+        return {
+          ...found,
+          countryName: found.pais_o_grupo // Mapeamos el nombre para la UI
+        };
+      }
       return null;
     };
 
     return {
-      incoming: toReceiveIds.map(findStickerById).filter(Boolean),
-      outgoing: toGiveIds.map(findStickerById).filter(Boolean)
+      incoming: toReceiveIds.map(findSticker).filter(Boolean),
+      outgoing: toGiveIds.map(findSticker).filter(Boolean)
     };
 
   } catch (error) {
     console.error("Error calculating match:", error);
-    return { incoming: [], outgoing: [], error: 'Error processing QR code' };
+    return { incoming: [], outgoing: [], error: 'Error al procesar el match' };
   }
 };
-
-
-// export const calculateMatch = (qrString: string, myInventory: InventoryType) => {
-//   try {
-//     // 1. Desarmar el string "N:A,B|C:C,D"
-//     const [needPart, swapPart] = qrString.split('|');
-    
-//     // Extraer los IDs limpios quitando "N:" y "C:"
-//     const theirNeeds = needPart.replace('Necesito:', '').split(',').filter(id => id);
-//     const theirSwaps = swapPart.replace('Cambio:', '').split(',').filter(id => id);
-
-//     // 2. MATCH: LO QUE YO RECIBO (Incoming)
-//     // Lógica: Ellos lo cambian (theirSwaps) Y yo lo necesito (myInventory[id] === 0)
-//     const toReceiveIds = theirSwaps.filter(id => (myInventory[id] || 0) === 0);
-
-//     // 3. MATCH: LO QUE YO DOY (Outgoing)
-//     // Lógica: Ellos lo necesitan (theirNeeds) Y yo lo tengo repetido (myInventory[id] > 1)
-//     const toGiveIds = theirNeeds.filter(id => (myInventory[id] || 0) > 1);
-
-//     // 4. Convertir IDs a Objetos Bonitos (para mostrar la foto/nombre)
-//     return {
-//       incoming: toReceiveIds.map(findStickerById).filter(Boolean),
-//       outgoing: toGiveIds.map(findStickerById).filter(Boolean)
-//     };
-
-//   } catch (error) {
-//     console.error("Error leyendo QR", error);
-//     return { incoming: [], outgoing: [] };
-//   }
-// };

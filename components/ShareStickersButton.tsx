@@ -1,5 +1,6 @@
 import { useStickers } from '@/context/StickerContext'; // Ajusta la ruta si es necesario
 import { supabase } from '@/utils/supabase'; // Ajusta la ruta si es necesario
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -18,14 +19,12 @@ interface StickerData {
 }
 
 export const ShareStickersButton = () => {
-  const { inventory } = useStickers();
+ const { inventory } = useStickers();
   const [isSharing, setIsSharing] = useState(false);
 
-  // Función para extraer solo los números y ordenar correctamente (ej: "ARG 10" > "ARG 2")
+  // Función para ordenar numéricamente (ahora recibe solo números)
   const sortByNumber = (a: string, b: string) => {
-    const numA = parseInt(a.replace(/\D/g, '')) || 0;
-    const numB = parseInt(b.replace(/\D/g, '')) || 0;
-    return numA - numB;
+    return (parseInt(a) || 0) - (parseInt(b) || 0);
   };
 
   const handleShare = async () => {
@@ -45,24 +44,28 @@ export const ShareStickersButton = () => {
 
       if (!data) return;
 
-      // 2. Clasificamos en faltantes y repetidas agrupadas por país/grupo
+      // 2. Clasificamos en faltantes y repetidas, y guardamos el orden original
       const missing: Record<string, string[]> = {};
       const repeated: Record<string, string[]> = {};
+      const orderedCountries: string[] = []; // Guardará el orden original de la DB
 
       data.forEach((sticker: StickerData) => {
         const qty = inventory[sticker.id] || 0;
         const country = sticker.pais_o_grupo;
-        const code = sticker.codigo;
+        // Extraemos solo los números del código (ej: "ALG10" -> "10")
+        const numberOnly = sticker.codigo.replace(/\D/g, '');
+
+        // Registramos el país en nuestro array de orden si es la primera vez que lo vemos
+        if (!orderedCountries.includes(country)) {
+          orderedCountries.push(country);
+        }
 
         if (qty === 0) {
           if (!missing[country]) missing[country] = [];
-          missing[country].push(code);
+          missing[country].push(numberOnly);
         } else if (qty > 1) {
           if (!repeated[country]) repeated[country] = [];
-          // Opcional: si quieres mostrar cuántas repetidas tienes de cada una
-          // const extras = qty - 1;
-          // repeated[country].push(`${code} (x${extras})`);
-          repeated[country].push(code);
+          repeated[country].push(numberOnly);
         }
       });
 
@@ -71,32 +74,42 @@ export const ShareStickersButton = () => {
 
       // Agregamos las FALTANTES
       message += "❌ ME FALTAN:\n";
-      const missingCountries = Object.keys(missing).sort();
-      if (missingCountries.length === 0) {
-        message += "¡Ninguna! Álbum completo 🎉\n";
-      } else {
-        missingCountries.forEach((country) => {
+      let hasMissing = false;
+      
+      // Recorremos usando el orden original de la base de datos
+      orderedCountries.forEach((country) => {
+        if (missing[country] && missing[country].length > 0) {
+          hasMissing = true;
           const codes = missing[country].sort(sortByNumber).join(', ');
           message += `*${country}:* ${codes}\n`;
-        });
+        }
+      });
+
+      if (!hasMissing) {
+        message += "¡Ninguna! Álbum completo 🎉\n";
       }
 
       // Agregamos las REPETIDAS
       message += "\n🔁 TENGO REPETIDAS:\n";
-      const repeatedCountries = Object.keys(repeated).sort();
-      if (repeatedCountries.length === 0) {
-        message += "Por ahora no tengo repetidas.\n";
-      } else {
-        repeatedCountries.forEach((country) => {
+      let hasRepeated = false;
+
+      // Recorremos usando el orden original de la base de datos
+      orderedCountries.forEach((country) => {
+        if (repeated[country] && repeated[country].length > 0) {
+          hasRepeated = true;
           const codes = repeated[country].sort(sortByNumber).join(', ');
           message += `*${country}:* ${codes}\n`;
-        });
+        }
+      });
+
+      if (!hasRepeated) {
+        message += "Por ahora no tengo repetidas.\n";
       }
 
       // 4. Abrimos el menú nativo para compartir (WhatsApp, Telegram, etc.)
       await Share.share({
         message: message,
-        title: 'Mi lista de intercambio de figuritas', // Título (usado principalmente en emails)
+        title: 'Mi lista de intercambio de figuritas',
       });
 
     } catch (error) {
@@ -105,18 +118,22 @@ export const ShareStickersButton = () => {
       setIsSharing(false);
     }
   };
-
+  
   return (
-    <View style={styles.container}>
+    <View >
       <TouchableOpacity
-        style={styles.button}
+        style={styles.shareButton}
         onPress={handleShare}
         disabled={isSharing}
       >
         {isSharing ? (
-          <ActivityIndicator color="#FFFFFF" />
+          <ActivityIndicator color="#2A398D" />
         ) : (
-          <Text style={styles.buttonText}>Compartir mi lista 📤</Text>
+          <>
+            <Ionicons name="share-social" size={20} color="#2A398D" />
+            <Text style={styles.shareText}>Compartir mi lista 📤</Text>
+
+          </>
         )}
       </TouchableOpacity>
     </View>
@@ -124,29 +141,25 @@ export const ShareStickersButton = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  button: {
-    backgroundColor: '#25D366', // Un verde estilo WhatsApp que llama a la acción de compartir
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
+  shareButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: 200,
-    elevation: 3, // Sombra en Android
-    shadowColor: '#000', // Sombra en iOS
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(42, 57, 141, 0.2)',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
   },
-  buttonText: {
-    color: '#FFFFFF',
+  shareText: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
+    color: '#2A398D',
   },
 });

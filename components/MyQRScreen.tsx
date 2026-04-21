@@ -1,26 +1,27 @@
-import ScannerScreen from '@/components/ScannerScreen';
-import { useStickers } from '@/context/StickerContext';
-import { useAuth } from '@/context/AuthContext';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import ScannerScreen from '@/components/ScannerScreen';
+import { useAuth } from '@/context/AuthContext';
+import { useStickers } from '@/context/StickerContext';
 import { generateCompactQR, generateQRString } from '@/utils/exchangeLogic';
 import hapticFeedback from '@/utils/haptics';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useEffect, useState, useMemo } from 'react';
-import { ActivityIndicator, Modal, StyleSheet, Text, TouchableOpacity, View, Platform, Dimensions } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Dimensions, Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import QRCode from 'react-native-qrcode-svg';
 import Animated, {
-  FadeInUp,
   FadeInDown,
+  FadeInUp,
   SlideInUp,
   SlideOutDown,
-  useSharedValue,
   useAnimatedStyle,
-  withSpring,
-  withTiming,
+  useSharedValue,
   withRepeat,
-  withSequence
+  withSequence,
+  withSpring,
+  withTiming
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import QRCode from 'react-native-qrcode-svg';
+import { ShareStickersButton } from './ShareStickersButton';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -135,7 +136,7 @@ export default function MyQRScreen() {
   return (
     <ErrorBoundary>
       <View style={[styles.container, { paddingTop: insets.top }]}>
-        {/* MODAL DEL ESCANER */}
+        {/* MODAL DEL ESCANER - Fuera del ScrollView */}
         <Modal visible={showScanner} animationType="none" transparent>
           <Animated.View
             entering={SlideInUp.duration(400)}
@@ -146,112 +147,144 @@ export default function MyQRScreen() {
           </Animated.View>
         </Modal>
 
-        {/* Header */}
-        <Animated.View
-          entering={FadeInUp.delay(200).duration(600)}
-          style={styles.header}
+        {/* CONTENIDO SCROLLEABLE */}
+        <ScrollView
+          showsVerticalScrollIndicator={false} // Oculta la barra de scroll
+          contentContainerStyle={styles.scrollContent} // Añade padding inferior aquí
         >
-          <Text style={styles.headerTitle}>Intercambio</Text>
-          <Text style={styles.headerSubtitle}>Comparte tu colección</Text>
-        </Animated.View>
-
-        {/* Stats Cards */}
-        <Animated.View
-          entering={FadeInUp.delay(400).duration(600)}
-          style={styles.statsContainer}
-        >
-          <View style={styles.statsRow}>
-            <View style={[styles.statCard, { backgroundColor: 'rgba(76, 236, 196, 0.15)' }]}>
-              <Ionicons name="copy" size={24} color="#4ECDC4" />
-              <Text style={[styles.statNumber, { color: '#4ECDC4' }]}>{sharingStats.duplicates}</Text>
-              <Text style={styles.statLabel}>Repetidas</Text>
-            </View>
-            <View style={[styles.statCard, { backgroundColor: 'rgba(255, 107, 107, 0.15)' }]}>
-              <Ionicons name="help-circle" size={24} color="#FF6B6B" />
-              <Text style={[styles.statNumber, { color: '#FF6B6B' }]}>{sharingStats.missing}</Text>
-              <Text style={styles.statLabel}>Faltantes</Text>
-            </View>
-          </View>
-        </Animated.View>
-
-        {/* Main QR Card */}
-        <Animated.View
-          entering={FadeInUp.delay(600).duration(800)}
-          style={[styles.qrCard, cardAnimatedStyle]}
-        >
-          <View style={styles.cardContent}>
-            <Animated.View style={floatingAnimatedStyle}>
-              <View style={styles.qrHeader}>
-                <Ionicons name="qr-code" size={28} color="#2A398D" />
-                <Text style={styles.cardTitle}>Tu Código QR</Text>
-              </View>
-            </Animated.View>
-
-            <Animated.View style={[styles.qrContainer, qrAnimatedStyle]}>
-              {isGeneratingQR ? (
-                <View style={styles.loadingContainer}>
-                  <ActivityIndicator size="large" color="#2A398D" />
-                  <Text style={styles.loadingText}>Generando código...</Text>
-                </View>
-              ) : qrError ? (
-                <View style={styles.errorContainer}>
-                  <Ionicons name="alert-circle" size={50} color="#d5191e" />
-                  <Text style={styles.errorText}>{qrError}</Text>
-                </View>
-              ) : (
-                <View style={styles.qrWrapper}>
-                  <QRCode
-                    value={qrData}
-                    size={Platform.OS === 'web' ? 280 : Math.min(screenWidth - 120, screenHeight > 700 ? 250 : 200)}
-                    color="black"
-                    backgroundColor="white"
-                  />
-                  <View style={styles.qrOverlay}>
-                    <Ionicons name="football" size={24} color="#d5191e" />
-                  </View>
-                </View>
-              )}
-            </Animated.View>
-
-            <View style={styles.qrFooter}>
-              <Text style={styles.infoText}>
-                {qrData.length === 8
-                  ? '🚀 Código compacto - ¡Escanea fácil y rápido!'
-                  : 'Este código contiene tus repetidas y faltantes.'}
-              </Text>
-
-              {qrData.length === 8 && (
-                <View style={styles.shareCodeContainer}>
-                  <Text style={styles.shareCodeLabel}>Código:</Text>
-                  <Text style={styles.shareCodeText}>{qrData}</Text>
-                </View>
-              )}
-            </View>
-          </View>
-        </Animated.View>
-
-        {/* Action Buttons */}
-        <Animated.View
-          entering={FadeInDown.delay(800).duration(600)}
-          style={styles.actionContainer}
-        >
-          <Animated.View style={buttonAnimatedStyle}>
-            <TouchableOpacity
-              style={styles.scanButton}
-              onPress={handleScanPress}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="camera" size={24} color="white" />
-              <Text style={styles.scanText}>Escanear Código</Text>
-              <Ionicons name="arrow-forward" size={20} color="white" />
-            </TouchableOpacity>
+          {/* Header */}
+          <Animated.View
+            entering={FadeInUp.delay(200).duration(600)}
+            style={styles.header}
+          >
+            <Text style={styles.headerTitle}>Intercambio</Text>
+            <Text style={styles.headerSubtitle}>Comparte tu colección</Text>
           </Animated.View>
 
-          <TouchableOpacity style={styles.shareButton} activeOpacity={0.8}>
-            <Ionicons name="share-social" size={20} color="#2A398D" />
-            <Text style={styles.shareText}>Compartir</Text>
-          </TouchableOpacity>
-        </Animated.View>
+          {/* Stats Cards */}
+          <Animated.View
+            entering={FadeInUp.delay(400).duration(600)}
+            style={styles.statsContainer}
+          >
+            <View style={styles.statsRow}>
+              <View style={[styles.statCard, { backgroundColor: 'rgba(76, 236, 196, 0.15)' }]}>
+                <Ionicons name="copy" size={24} color="#4ECDC4" />
+                <Text style={[styles.statNumber, { color: '#4ECDC4' }]}>{sharingStats.duplicates}</Text>
+                <Text style={styles.statLabel}>Repetidas</Text>
+              </View>
+              <View style={[styles.statCard, { backgroundColor: 'rgba(255, 107, 107, 0.15)' }]}>
+                <Ionicons name="help-circle" size={24} color="#FF6B6B" />
+                <Text style={[styles.statNumber, { color: '#FF6B6B' }]}>{sharingStats.missing}</Text>
+                <Text style={styles.statLabel}>Faltantes</Text>
+              </View>
+            </View>
+          </Animated.View>
+
+          {/* Main QR Card */}
+          <Animated.View
+            entering={FadeInUp.delay(600).duration(800)}
+            style={[styles.qrCard, cardAnimatedStyle]}
+          >
+            <View style={styles.cardContent}>
+              <Animated.View style={floatingAnimatedStyle}>
+                <View style={styles.qrHeader}>
+                  <Ionicons name="qr-code" size={28} color="#2A398D" />
+                  <Text style={styles.cardTitle}>Tu Código QR</Text>
+                </View>
+              </Animated.View>
+
+              {/* <Animated.View style={[styles.qrContainer, qrAnimatedStyle]}>
+                {isGeneratingQR ? (
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#2A398D" />
+                    <Text style={styles.loadingText}>Generando código...</Text>
+                  </View>
+                ) : qrError ? (
+                  <View style={styles.errorContainer}>
+                    <Ionicons name="alert-circle" size={50} color="#d5191e" />
+                    <Text style={styles.errorText}>{qrError}</Text>
+                  </View>
+                ) : (
+                  <View style={styles.qrWrapper}>
+                    <QRCode
+                      value={qrData}
+                      size={Platform.OS === 'web' ? 280 : Math.min(screenWidth - 120, screenHeight > 700 ? 250 : 200)}
+                      color="black"
+                      backgroundColor="white"
+                    />
+                    <View style={styles.qrOverlay}>
+                      <Ionicons name="football" size={24} color="#d5191e" />
+                    </View>
+                  </View>
+                )}
+              </Animated.View> */}
+
+              <Animated.View style={[styles.qrContainer, qrAnimatedStyle]}>
+                {isGeneratingQR ? (
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#2A398D" />
+                    <Text style={styles.loadingText}>Generando código...</Text>
+                  </View>
+                ) : qrError ? (
+                  <View style={styles.errorContainer}>
+                    <Ionicons name="alert-circle" size={50} color="#d5191e" />
+                    <Text style={styles.errorText}>{qrError}</Text>
+                  </View>
+                ) : qrData ? ( // <--- CAMBIO AQUÍ: Verificar que qrData no sea string vacío
+                  <View style={styles.qrWrapper}>
+                    <QRCode
+                      value={qrData}
+                      size={Platform.OS === 'web' ? 280 : Math.min(screenWidth - 120, screenHeight > 700 ? 250 : 200)}
+                      color="black"
+                      backgroundColor="white"
+                    />
+                    <View style={styles.qrOverlay}>
+                      <Ionicons name="football" size={24} color="#d5191e" />
+                    </View>
+                  </View>
+                ) : (
+                  // Fallback por si qrData sigue vacío y no hay error aún
+                  <ActivityIndicator size="small" color="#2A398D" />
+                )}
+              </Animated.View>
+
+              <View style={styles.qrFooter}>
+                <Text style={styles.infoText}>
+                  {qrData.length === 8
+                    ? '🚀 Código compacto - ¡Escanea fácil y rápido!'
+                    : 'Este código contiene tus repetidas y faltantes.'}
+                </Text>
+
+                {qrData.length === 8 && (
+                  <View style={styles.shareCodeContainer}>
+                    <Text style={styles.shareCodeLabel}>Código:</Text>
+                    <Text style={styles.shareCodeText}>{qrData}</Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          </Animated.View>
+
+          {/* Action Buttons */}
+          <Animated.View
+            entering={FadeInDown.delay(800).duration(600)}
+            style={styles.actionContainer}
+          >
+            <Animated.View style={buttonAnimatedStyle}>
+              <TouchableOpacity
+                style={styles.scanButton}
+                onPress={handleScanPress}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="camera" size={24} color="white" />
+                <Text style={styles.scanText}>Escanear Código</Text>
+                <Ionicons name="arrow-forward" size={20} color="white" />
+              </TouchableOpacity>
+            </Animated.View>
+
+            <ShareStickersButton />
+          </Animated.View>
+        </ScrollView>
       </View>
     </ErrorBoundary>
   );
@@ -262,6 +295,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8f9fa',
     paddingHorizontal: 20,
+  },
+  scrollContent: {
+    paddingBottom: 40,
   },
   modalContainer: {
     flex: 1,
@@ -317,10 +353,12 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
   },
+
+
   qrCard: {
-    flex: 1,
-    minHeight: screenHeight > 700 ? 500 : 400,
-    maxHeight: screenHeight > 700 ? '70%' : '65%',
+    // IMPORTANTE: flex: 1 no funciona bien dentro de ScrollView
+    width: '100%',
+    minHeight: screenHeight > 700 ? 450 : 400,
     marginBottom: 20,
     borderRadius: 24,
     overflow: 'hidden',
