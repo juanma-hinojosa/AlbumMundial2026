@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from "react-i18next";
 import { Dimensions, Platform, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -11,6 +12,7 @@ import Animated, {
 const { width: screenWidth } = Dimensions.get('window');
 
 const CountdownTimer: React.FC<{ targetDate: string | Date }> = ({ targetDate }) => {
+  const { t } = useTranslation();
   const calculateTimeLeft = () => {
     const difference = +new Date(targetDate) - +new Date();
     if (difference <= 0) {
@@ -70,13 +72,13 @@ const CountdownTimer: React.FC<{ targetDate: string | Date }> = ({ targetDate })
 
   return (
     <View style={styles.container}>
-      <TimeUnit value={timeLeft.days} label="Días" animStyle={createAnimatedStyle(daysScale)} />
+      <TimeUnit value={timeLeft.days} label={t('contador:dias')} animStyle={createAnimatedStyle(daysScale)} />
       <Separator />
-      <TimeUnit value={timeLeft.hours} label="Horas" animStyle={createAnimatedStyle(hoursScale)} />
+      <TimeUnit value={timeLeft.hours} label={t('contador:horas')} animStyle={createAnimatedStyle(hoursScale)} />
       <Separator />
-      <TimeUnit value={timeLeft.minutes} label="Min" animStyle={createAnimatedStyle(minutesScale)} />
+      <TimeUnit value={timeLeft.minutes} label={t('contador:minutos')} animStyle={createAnimatedStyle(minutesScale)} />
       <Separator />
-      <TimeUnit value={timeLeft.seconds} label="Seg" animStyle={createAnimatedStyle(secondsScale)} />
+      <TimeUnit value={timeLeft.seconds} label={t('contador:segundos')} animStyle={createAnimatedStyle(secondsScale)} />
     </View>
   );
 };

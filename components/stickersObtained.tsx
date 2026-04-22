@@ -1,12 +1,15 @@
 import { StickerGrid } from "@/components/StickerGrid";
+import { useTranslation } from "react-i18next";
 import { StyleSheet, Text, View } from "react-native";
 
 export default function StickerObtainedScreen() {
+  const { t } = useTranslation();
+
   return (
     // <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
       <View style={{ padding: 10, backgroundColor: '#e8f5e9' }}>
-        <Text style={{ color: '#2e7d32', fontWeight: 'bold' }}>Listas para cambiar</Text>
+        <Text style={{ color: '#2e7d32', fontWeight: 'bold' }}>{t('album:repeatedTitle')}</Text>
       </View>
       <StickerGrid filterType="repeated" />
     </View>

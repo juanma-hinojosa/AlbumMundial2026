@@ -4,6 +4,7 @@ import { StickerStats } from "@/components/StickerStats";
 import hapticFeedback from "@/utils/haptics";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity } from "react-native";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -30,6 +31,7 @@ const COLORS = [
 
 // albumData
 export default function StickerAlbumScreen() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'all' | 'missing' | 'repeated' | 'estadisticas'>('all');
 
   const getTabIcon = (tab: string) => {
@@ -64,8 +66,8 @@ export default function StickerAlbumScreen() {
           entering={FadeInUp.delay(100).duration(600)}
           style={styles.header}
         >
-          <Text style={styles.headerTitle}>Mi Álbum</Text>
-          <Text style={styles.headerSubtitle}>Colección Mundial 2026</Text>
+          <Text style={styles.headerTitle}>{t('album:albumTitle')}</Text>
+          <Text style={styles.headerSubtitle}>{t('album:albumSubtitle')}</Text>
         </Animated.View>
 
         {/* Tabs */}
@@ -80,25 +82,28 @@ export default function StickerAlbumScreen() {
             contentContainerStyle={{ paddingHorizontal: 16 }}
           >
             <TabButton
-              label="Todas"
+              label={t('album:tabs:all')}
               icon={getTabIcon('all')}
               active={activeTab === 'all'}
               onPress={() => setActiveTab('all')}
             />
+
             <TabButton
-              label="Faltantes"
+              label={t('album:tabs:missing')}
               icon={getTabIcon('missing')}
               active={activeTab === 'missing'}
               onPress={() => setActiveTab('missing')}
             />
+
             <TabButton
-              label="Repetidas"
+              label={t('album:tabs:repeated')}
               icon={getTabIcon('repeated')}
               active={activeTab === 'repeated'}
               onPress={() => setActiveTab('repeated')}
             />
+
             <TabButton
-              label='Estadísticas'
+              label={t('album:tabs:stats')}
               icon={getTabIcon('estadisticas')}
               active={activeTab === 'estadisticas'}
               onPress={() => setActiveTab('estadisticas')}

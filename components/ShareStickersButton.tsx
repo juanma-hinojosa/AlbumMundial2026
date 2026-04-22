@@ -2,6 +2,7 @@ import { useStickers } from '@/context/StickerContext'; // Ajusta la ruta si es 
 import { supabase } from '@/utils/supabase'; // Ajusta la ruta si es necesario
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
   Alert,
@@ -19,6 +20,7 @@ interface StickerData {
 }
 
 export const ShareStickersButton = () => {
+  const {t} = useTranslation();
  const { inventory } = useStickers();
   const [isSharing, setIsSharing] = useState(false);
 
@@ -131,7 +133,7 @@ export const ShareStickersButton = () => {
         ) : (
           <>
             <Ionicons name="share-social" size={20} color="#2A398D" />
-            <Text style={styles.shareText}>Compartir mi lista 📤</Text>
+            <Text style={styles.shareText}>{t('album:share')}📤</Text>
 
           </>
         )}

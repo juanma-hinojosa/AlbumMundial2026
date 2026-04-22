@@ -10,21 +10,144 @@ const resources = {
       settings: 'Configuración',
       language: 'Idioma',
       selectLanguage: 'Seleccionar Idioma',
-    }
+      loadingApp: 'Iniciando aplicación...',
+      tabs: {
+        home: 'Inicio',
+        album: 'Álbum',
+        fixture: 'Partidos',
+        exchange: 'Intercambiar',
+        account: 'Cuenta',
+        settings: 'Ajustes'
+      }
+    },
+    contador: {
+      faltan: 'faltan',
+      dias: 'dias',
+      horas: 'horas',
+      segundos: 'seg',
+      subtitle: 'para la Copa del Mundo',
+      obtenidas: 'Obtenidas',
+      repetidas: 'Repetidas',
+      de: 'de'
+    },
+    album: {
+      grupo: 'Grupo',
+      albumTitle: 'Mi Álbum',
+      albumSubtitle: 'Colección Mundial 2026',
+      tabs: {
+        all: 'Todas',
+        missing: 'Faltantes',
+        repeated: 'Repetidas',
+        stats: 'Estadísticas'
+      },
+      remainingTitle: '¡A buscarlas!',
+      repeatedTitle: 'Listas para cambiar',
+      stats: {
+        completed: 'Completado',
+        missing: 'Faltantes',
+        obtained: 'Conseguidas',
+        specialMissing: 'Especiales Faltantes',
+        specialSubtitle: 'FWC, CC y Escudos'
+      },
+      share: 'Compartir mis repetidas'
+    },
+
   },
   'en': {
     translation: {
       settings: 'Settings',
       language: 'Language',
       selectLanguage: 'Select Language',
-    }
+      loadingApp: 'Starting app...',
+      tabs: {
+        home: 'Home',
+        album: 'Album',
+        fixture: 'Matches',
+        exchange: 'Trade',
+        account: 'Account',
+        settings: 'Settings'
+      }
+    },
+    contador: {
+      faltan: 'there are',
+      dias: 'days',
+      horas: 'hours',
+      segundos: 'sec',
+      subtitle: 'left until the start for the FIFA World Cup',
+      obtenidas: 'obtained',
+      repetidas: 'double',
+      de: 'of'
+    },
+    album: {
+      grupo: 'Group',
+      albumTitle: 'My Album',
+      albumSubtitle: 'World Cup Collection 2026',
+      tabs: {
+        all: 'All',
+        missing: 'Missing',
+        repeated: 'Repeated',
+        stats: 'Stats'
+      },
+      remainingTitle: 'Go find them!',
+      repeatedTitle: 'Ready to trade',
+      stats: {
+        completed: 'Completed',
+        missing: 'Missing',
+        obtained: 'Collected',
+        specialMissing: 'Special Missing',
+        specialSubtitle: 'FWC, CC and Badges'
+      },
+      share: 'Share my duplicates'
+
+    },
   },
   'pt-BR': {
     translation: {
       settings: 'Configurações',
       language: 'Idioma',
       selectLanguage: 'Selecionar Idioma',
-    }
+      loadingApp: 'Iniciando aplicativo...',
+      tabs: {
+        home: 'Início',
+        album: 'Álbum',
+        fixture: 'Jogos',
+        exchange: 'Trocar',
+        account: 'Conta',
+        settings: 'Configurações'
+      }
+    },
+    contador: {
+      faltan: 'faltam',
+      dias: 'dias',
+      horas: 'horas',
+      segundos: 'seg',
+      subtitle: 'para o inicio da Copa do Mundo',
+      obtenidas: 'Obtidas',
+      repetidas: 'Repetidas',
+      de: 'de'
+    },
+    album: {
+      grupo: 'Grupo',
+      albumTitle: 'Meu Álbum',
+      albumSubtitle: 'Coleção Copa do Mundo 2026',
+      tabs: {
+        all: 'Todas',
+        missing: 'Faltantes',
+        repeated: 'Repetidas',
+        stats: 'Estatísticas'
+      },
+      remainingTitle: 'Bora buscá-las!',
+      repeatedTitle: 'Prontas para trocar',
+      stats: {
+        completed: 'Completo',
+        missing: 'Faltantes',
+        obtained: 'Obtidas',
+        specialMissing: 'Especiais Faltantes',
+        specialSubtitle: 'FWC, CC e Brasão'
+      },
+      share: 'Compartilhar minhas repetidas'
+
+    },
   }
 };
 
@@ -38,19 +161,19 @@ const languageDetector: any = {
       if (savedLanguage) {
         return callback(savedLanguage);
       }
-      
+
       // Si no hay idioma guardado, detecta el del dispositivo
       const deviceLang = Localization.getLocales()[0].languageTag;
       const defaultLang = ['es-LA', 'en', 'pt-BR'].includes(deviceLang) ? deviceLang : 'es-LA';
-      
+
       return callback(defaultLang);
     } catch (error) {
       console.error('Error reading language', error);
       return callback('es-LA');
     }
   },
-  init: () => {},
-  cacheUserLanguage: () => {},
+  init: () => { },
+  cacheUserLanguage: () => { },
 };
 
 i18n

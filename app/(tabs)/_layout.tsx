@@ -5,10 +5,11 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Tabs } from "expo-router";
+import { useTranslation } from "react-i18next";
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
-
 export default function TabsLayout() {
+  const { t } = useTranslation();
   const { user, isLoading } = useAuth()
 
   if (isLoading) {
@@ -19,7 +20,7 @@ export default function TabsLayout() {
         style={{ flex: 1, backgroundColor: '#f8f9fa' }}
       >
         <LoadingSpinner
-          message="Iniciando aplicación..."
+          message={t('loadingApp')}
           size="large"
         />
       </Animated.View>
@@ -64,22 +65,23 @@ export default function TabsLayout() {
           }}
         >
           <Tabs.Screen name="index" options={{
-            title: 'Home',
+            title: t('tabs.home'),
             tabBarIcon: ({ color, focused }) => (
               <Ionicons name={focused ? 'home-sharp' : 'home-outline'} color={color} size={24} />
             ),
           }} />
+
           <Tabs.Screen name="stickerAlbum"
             options={{
-              title: 'Album',
-              tabBarIcon: ({ color, focused }) => (<AntDesign name="book" size={24} color={color} />)
+              title: t('tabs.album'),
+              tabBarIcon: ({ color }) => (<AntDesign name="book" size={24} color={color} />)
             }}
           />
 
           <Tabs.Screen
             name="fixture"
             options={{
-              title: 'Fixture',
+              title: t('tabs.fixture'),
               tabBarIcon: ({ color }) => <MaterialCommunityIcons name="merge" size={24} color={color} />
             }}
           />
@@ -87,29 +89,28 @@ export default function TabsLayout() {
           <Tabs.Screen
             name="exchange"
             options={{
-              title: 'Cambiar',
+              title: t('tabs.exchange'),
               tabBarIcon: ({ color }) => <Ionicons name="qr-code-outline" size={24} color={color} />,
             }}
           />
 
-          {/* LOGIN: Desaparece si 'user' existe */}
           <Tabs.Screen
             name="Login"
             options={{
-              title: 'Cuenta',
+              title: t('tabs.account'),
               href: user ? null : undefined,
               tabBarIcon: ({ color }) => <Ionicons name="person-outline" size={24} color={color} />,
             }}
           />
 
-          // Agrega esta nueva ruta al final de tus Tabs en TabsLayout
           <Tabs.Screen
             name="settings"
             options={{
-              title: 'Ajustes', // O usa t('settings') si exportas el hook useTranslation aquí también
+              title: t('tabs.settings'),
               tabBarIcon: ({ color }) => <Ionicons name="settings-outline" size={24} color={color} />,
             }}
           />
+
 
         </Tabs>
       </Animated.View>

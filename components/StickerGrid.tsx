@@ -2,10 +2,10 @@ import { useStickers } from '@/context/StickerContext';
 import { supabase } from '@/utils/supabase';
 import { Image } from 'expo-image';
 import { useEffect, useState } from 'react';
-import { SectionList, StyleSheet, Text, View, Platform, Dimensions } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { Dimensions, Platform, SectionList, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { StickerItem } from './stickerItem';
-import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated';
-import Ionicons from '@expo/vector-icons/Ionicons';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -85,12 +85,13 @@ interface StickerGridProps {
 };
 
 export const StickerGrid = ({ filterType = 'all' }: StickerGridProps) => {
+  const { t ,i18n} = useTranslation();
   const { inventory, toggleSticker, decrementSticker } = useStickers();
   const [sections, setSections] = useState<any[]>([]);
 
   useEffect(() => {
     fetchStickers();
-  }, [inventory, filterType]);
+  }, [inventory, filterType, i18n.language]);
 
   const sortByNumber = (a: any, b: any) => {
     const numA = parseInt(a.codigo.replace(/\D/g, ''));
@@ -161,7 +162,7 @@ export const StickerGrid = ({ filterType = 'all' }: StickerGridProps) => {
 
       if (dataByCountry.length > 0) {
         sectionsFormatted.push({
-          title: `Grupo ${group}`,
+          title: `${t('album:grupo')} ${group}`,
           data: dataByCountry,
         });
       }

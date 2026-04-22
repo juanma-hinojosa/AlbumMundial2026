@@ -2,8 +2,9 @@ import CountdownTimer from "@/components/CountdownTimer";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { useStickers } from "@/context/StickerContext";
 import Ionicons from '@expo/vector-icons/Ionicons';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Image, ImageBackground } from "expo-image";
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from "react-i18next";
 import { Dimensions, Platform, StyleSheet, Text, View } from "react-native";
 import Animated, {
@@ -22,8 +23,28 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const PlaceholderImage = require('@/assets/images/hero-home.jpg');
 const LogoWorldCup = require('@/assets/images/logo-world-cup.png');
 
+
+const LANGUAGES = [
+  { code: 'es-LA', label: 'Español (Latinoamérica)' },
+  { code: 'en', label: 'English' },
+  { code: 'pt-BR', label: 'Português (Brasil)' },
+];
+
 export default function Index() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation(['translation', 'contador']);
+  const [currentLang, setCurrentLang] = useState(i18n.language);
+
+  // Sincroniza el estado si el idioma cambia desde otro lugar
+  useEffect(() => {
+    setCurrentLang(i18n.language);
+  }, [i18n.language]);
+
+  const changeLanguage = async (langCode: string) => {
+    setCurrentLang(langCode);
+    await i18n.changeLanguage(langCode);
+    await AsyncStorage.setItem('user-language', langCode);
+  };
+
   const { inventory, catalog } = useStickers();
   const insets = useSafeAreaInsets();
 
@@ -116,10 +137,10 @@ export default function Index() {
               style={styles.countdownSection}
             >
               <Animated.View style={pulseAnimatedStyle}>
-                <Text style={styles.countdownTitle}>FALTAN</Text>
+                <Text style={styles.countdownTitle}>{t('contador:faltan')}</Text>
               </Animated.View>
               <CountdownTimer targetDate="2026-06-11T23:59:59" />
-              <Text style={styles.subtitle}>para la Copa del Mundo</Text>
+              <Text style={styles.subtitle}>{t('contador:subtitle')}</Text>
             </Animated.View>
 
             {/* Stats Cards */}
@@ -131,19 +152,19 @@ export default function Index() {
                 <View style={styles.statCard}>
                   <Ionicons name="albums" size={24} color="#FFD700" />
                   <Text style={styles.statNumber}>{stats.collected}</Text>
-                  <Text style={styles.statLabel}>Obtenidas</Text>
+                  <Text style={styles.statLabel}>{t('contador:obtenidas')}</Text>
                 </View>
 
                 <View style={styles.statCard}>
                   <Ionicons name="copy" size={24} color="#FF6B6B" />
                   <Text style={styles.statNumber}>{stats.duplicates}</Text>
-                  <Text style={styles.statLabel}>Repetidas</Text>
+                  <Text style={styles.statLabel}>{t('contador:repetidas')}</Text>
                 </View>
 
                 <View style={styles.statCard}>
                   <Ionicons name="trophy" size={24} color="#4ECDC4" />
                   <Text style={styles.statNumber}>{stats.completion}%</Text>
-                  <Text style={styles.statLabel}>de {stats.total}</Text>
+                  <Text style={styles.statLabel}>{t('contador:de')} {stats.total}</Text>
                 </View>
               </View>
             </Animated.View>
@@ -194,6 +215,7 @@ const styles = StyleSheet.create({
   countdownTitle: {
     fontSize: Platform.OS === 'web' ? 32 : screenHeight > 700 ? 28 : 24,
     fontWeight: '800',
+    textTransform: 'uppercase',
     color: '#ffffff',
     textAlign: 'center',
     letterSpacing: screenHeight > 700 ? 3 : 2,
@@ -242,5 +264,6 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.7)',
     fontWeight: '500',
     textAlign: 'center',
+    textTransform:'capitalize'
   },
 });
