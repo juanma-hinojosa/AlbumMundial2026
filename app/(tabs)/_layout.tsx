@@ -1,11 +1,10 @@
-import { useAuth } from '@/context/AuthContext';
-import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import { useAuth } from '@/context/AuthContext';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Tabs } from "expo-router";
-import { View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
 
@@ -64,44 +63,53 @@ export default function TabsLayout() {
             }
           }}
         >
-      <Tabs.Screen name="index" options={{
-        title: 'Home',
-        tabBarIcon: ({ color, focused }) => (
-          <Ionicons name={focused ? 'home-sharp' : 'home-outline'} color={color} size={24} />
-        ),
-      }} />
-      <Tabs.Screen name="stickerAlbum"
-        options={{
-          title: 'Album',
-          tabBarIcon: ({ color, focused }) => (<AntDesign name="book" size={24} color={color} />)
-        }}
-      />
+          <Tabs.Screen name="index" options={{
+            title: 'Home',
+            tabBarIcon: ({ color, focused }) => (
+              <Ionicons name={focused ? 'home-sharp' : 'home-outline'} color={color} size={24} />
+            ),
+          }} />
+          <Tabs.Screen name="stickerAlbum"
+            options={{
+              title: 'Album',
+              tabBarIcon: ({ color, focused }) => (<AntDesign name="book" size={24} color={color} />)
+            }}
+          />
 
-      <Tabs.Screen
-        name="fixture"
-        options={{
-          title: 'Fixture',
-          tabBarIcon: ({ color }) => <MaterialCommunityIcons name="merge" size={24} color={color} />
-        }}
-      />
+          <Tabs.Screen
+            name="fixture"
+            options={{
+              title: 'Fixture',
+              tabBarIcon: ({ color }) => <MaterialCommunityIcons name="merge" size={24} color={color} />
+            }}
+          />
 
-      <Tabs.Screen
-        name="exchange"
-        options={{
-          title: 'Cambiar',
-          tabBarIcon: ({ color }) => <Ionicons name="qr-code-outline" size={24} color={color} />,
-        }}
-      />
+          <Tabs.Screen
+            name="exchange"
+            options={{
+              title: 'Cambiar',
+              tabBarIcon: ({ color }) => <Ionicons name="qr-code-outline" size={24} color={color} />,
+            }}
+          />
 
-      {/* LOGIN: Desaparece si 'user' existe */}
-      <Tabs.Screen
-        name="Login"
-        options={{
-          title: 'Cuenta',
-          href: user ? null : undefined,
-          tabBarIcon: ({ color }) => <Ionicons name="person-outline" size={24} color={color} />,
-        }}
-      />
+          {/* LOGIN: Desaparece si 'user' existe */}
+          <Tabs.Screen
+            name="Login"
+            options={{
+              title: 'Cuenta',
+              href: user ? null : undefined,
+              tabBarIcon: ({ color }) => <Ionicons name="person-outline" size={24} color={color} />,
+            }}
+          />
+
+          // Agrega esta nueva ruta al final de tus Tabs en TabsLayout
+          <Tabs.Screen
+            name="settings"
+            options={{
+              title: 'Ajustes', // O usa t('settings') si exportas el hook useTranslation aquí también
+              tabBarIcon: ({ color }) => <Ionicons name="settings-outline" size={24} color={color} />,
+            }}
+          />
 
         </Tabs>
       </Animated.View>

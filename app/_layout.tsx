@@ -1,7 +1,8 @@
-import { AuthProvider } from "@/context/AuthContext";
-import { StickerProvider, useStickers } from "@/context/StickerContext";
 import ErrorBoundary from '@/components/ErrorBoundary';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { AuthProvider } from "@/context/AuthContext";
+import { StickerProvider, useStickers } from "@/context/StickerContext";
+import '@/utils/i18n';
 import { Stack } from "expo-router";
 import { StatusBar } from 'expo-status-bar';
 import Animated, { FadeIn } from 'react-native-reanimated';

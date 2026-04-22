@@ -1,20 +1,21 @@
 import CountdownTimer from "@/components/CountdownTimer";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { useStickers } from "@/context/StickerContext";
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image, ImageBackground } from "expo-image";
+import { useEffect, useMemo } from 'react';
+import { useTranslation } from "react-i18next";
 import { Dimensions, Platform, StyleSheet, Text, View } from "react-native";
 import Animated, {
-  FadeInUp,
   FadeInDown,
-  withSpring,
-  useSharedValue,
+  FadeInUp,
   useAnimatedStyle,
+  useSharedValue,
   withRepeat,
+  withSpring,
   withTiming
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { useMemo, useEffect } from 'react';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -22,6 +23,7 @@ const PlaceholderImage = require('@/assets/images/hero-home.jpg');
 const LogoWorldCup = require('@/assets/images/logo-world-cup.png');
 
 export default function Index() {
+  const { t } = useTranslation();
   const { inventory, catalog } = useStickers();
   const insets = useSafeAreaInsets();
 

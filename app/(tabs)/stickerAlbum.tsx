@@ -1,12 +1,12 @@
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { StickerGrid } from "@/components/StickerGrid";
 import { StickerStats } from "@/components/StickerStats";
-import ErrorBoundary from "@/components/ErrorBoundary";
 import hapticFeedback from "@/utils/haptics";
-import { useMemo, useState } from "react";
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Platform, Dimensions } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import Animated, { FadeInUp, FadeInDown } from "react-native-reanimated";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { useState } from "react";
+import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity } from "react-native";
+import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
+import { SafeAreaView } from "react-native-safe-area-context";
 import RemainingStickerAlbumScreen from "../../components/remainingStickerAlbum";
 import StickerObtainedScreen from "../../components/stickersObtained";
 
@@ -116,21 +116,8 @@ export default function StickerAlbumScreen() {
       </SafeAreaView>
     </ErrorBoundary>
   );
-
 }
 
-// const TabButton = ({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) => {
-//   return (
-//     <TouchableOpacity
-//       onPress={onPress}
-//       style={[styles.tabButton, active && styles.activeTab]}
-//     >
-//       <Text style={[styles.tabText, active && styles.activeTabText]}>
-//         {label}
-//       </Text>
-//     </TouchableOpacity>
-//   );
-// };
 
 
 const TabButton = ({
