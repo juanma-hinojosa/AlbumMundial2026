@@ -1,30 +1,32 @@
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { StickerGrid } from "@/components/StickerGrid";
 import { StickerStats } from "@/components/StickerStats";
-import { useMemo, useState } from "react";
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import hapticFeedback from "@/utils/haptics";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity } from "react-native";
+import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import RemainingStickerAlbumScreen from "../../components/remainingStickerAlbum";
 import StickerObtainedScreen from "../../components/stickersObtained";
 
-
-const COLORS = [
-  '#f4f4f2',
-  '#1d1c1a',
-  '#6fa5a3',
-  '#d5191e',
-  '#343975',
-  '#e3db71',
-  '#7a1c1d',
-  '#b1b6ce',
-  '#ebb8a5',
-  '#666f57',
-  '#b5ba47',
-  '#245da0',
-];
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 // albumData
 export default function StickerAlbumScreen() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'all' | 'missing' | 'repeated' | 'estadisticas'>('all');
+
+  const getTabIcon = (tab: string) => {
+    switch (tab) {
+      case 'all': return 'grid-outline';
+      case 'missing': return 'help-circle-outline';
+      case 'repeated': return 'copy-outline';
+      case 'estadisticas': return 'stats-chart-outline';
+      default: return 'grid-outline';
+    }
+  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -41,84 +43,106 @@ export default function StickerAlbumScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.tabsContainer}
-        contentContainerStyle={{ paddingHorizontal: 10 }}
-      >
-        <TabButton label="Todas" active={activeTab === 'all'} onPress={() => setActiveTab('all')} />
-        <TabButton label="Faltantes" active={activeTab === 'missing'} onPress={() => setActiveTab('missing')} />
-        <TabButton label="Repetidas" active={activeTab === 'repeated'} onPress={() => setActiveTab('repeated')} />
-        <TabButton label='Estadisticas' active={activeTab === 'estadisticas'} onPress={() => setActiveTab('estadisticas')} />
-        {/* <TabButton label='Intercambiar' /> */}
-        {/* <TabButton label='Escanear Album' /> */}
-      </ScrollView>
+    <ErrorBoundary>
+      <SafeAreaView style={styles.container}>
+        {/* Header */}
+        <Animated.View
+          entering={FadeInUp.delay(100).duration(600)}
+          style={styles.header}
+        >
+          <Text style={styles.headerTitle}>{t('album:albumTitle')}</Text>
+          <Text style={styles.headerSubtitle}>{t('album:albumSubtitle')}</Text>
+        </Animated.View>
 
-      <View style={{ flex: 1 }}>
-        {renderContent()}
-      </View>
-    </SafeAreaView>
+        {/* Tabs */}
+        <Animated.View
+          entering={FadeInUp.delay(200).duration(600)}
+          style={styles.tabsWrapper}
+        >
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.tabsContainer}
+            contentContainerStyle={{ paddingHorizontal: 16 }}
+          >
+            <TabButton
+              label={t('album:tabs:all')}
+              icon={getTabIcon('all')}
+              active={activeTab === 'all'}
+              onPress={() => setActiveTab('all')}
+            />
+
+            <TabButton
+              label={t('album:tabs:missing')}
+              icon={getTabIcon('missing')}
+              active={activeTab === 'missing'}
+              onPress={() => setActiveTab('missing')}
+            />
+
+            <TabButton
+              label={t('album:tabs:repeated')}
+              icon={getTabIcon('repeated')}
+              active={activeTab === 'repeated'}
+              onPress={() => setActiveTab('repeated')}
+            />
+
+            <TabButton
+              label={t('album:tabs:stats')}
+              icon={getTabIcon('estadisticas')}
+              active={activeTab === 'estadisticas'}
+              onPress={() => setActiveTab('estadisticas')}
+            />
+          </ScrollView>
+        </Animated.View>
+
+        {/* Content */}
+        <Animated.View
+          entering={FadeInDown.delay(300).duration(600)}
+          style={styles.contentContainer}
+        >
+          {renderContent()}
+        </Animated.View>
+      </SafeAreaView>
+    </ErrorBoundary>
   );
-
 }
 
-// const TabButton = ({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) => {
-//   return (
-//     <TouchableOpacity
-//       onPress={onPress}
-//       style={[styles.tabButton, active && styles.activeTab]}
-//     >
-//       <Text style={[styles.tabText, active && styles.activeTabText]}>
-//         {label}
-//       </Text>
-//     </TouchableOpacity>
-//   );
-// };
 
 
 const TabButton = ({
   label,
+  icon,
   active,
   onPress,
 }: {
   label: string;
+  icon: string;
   active: boolean;
   onPress: () => void;
 }) => {
-
-  // color aleatorio que NO cambia en re-renders
-  const randomColor = useMemo(() => {
-    return COLORS[Math.floor(Math.random() * COLORS.length)];
-  }, []);
-
-  const backgroundColor = active ? '#1d1c1a' : randomColor;
-
-  // Detectar si el fondo es claro u oscuro (para el texto)
-  const isLight = (hex: string) => {
-    const c = hex.replace('#', '');
-    const r = parseInt(c.substring(0, 2), 16);
-    const g = parseInt(c.substring(2, 4), 16);
-    const b = parseInt(c.substring(4, 6), 16);
-    return (r * 0.299 + g * 0.587 + b * 0.114) > 186;
+  const handlePress = () => {
+    hapticFeedback.light();
+    onPress();
   };
-
-  const textColor = active
-    ? '#fff'
-    : isLight(randomColor)
-    ? '#000'
-    : '#fff';
 
   return (
     <TouchableOpacity
-      onPress={onPress}
+      onPress={handlePress}
       style={[
         styles.tabButton,
-        { backgroundColor }
+        active && styles.activeTabButton
       ]}
+      activeOpacity={0.7}
     >
-      <Text style={[styles.tabText, { color: textColor }]}>
+      <Ionicons
+        name={icon as any}
+        size={18}
+        color={active ? '#ffffff' : 'rgba(26, 26, 46, 0.6)'}
+      />
+      <Text style={[
+        styles.tabText,
+        active && styles.activeTabText
+      ]}>
         {label}
       </Text>
     </TouchableOpacity>
@@ -126,36 +150,77 @@ const TabButton = ({
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f8f9fa',
+  },
+  header: {
+    alignItems: 'center',
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    backgroundColor: 'transparent',
+  },
+  headerTitle: {
+    fontSize: screenHeight > 700 ? 28 : 24,
+    fontWeight: '800',
+    color: '#1a1a2e',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  headerSubtitle: {
+    fontSize: screenHeight > 700 ? 16 : 14,
+    color: 'rgba(26, 26, 46, 0.7)',
+    textAlign: 'center',
+  },
+  tabsWrapper: {
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
   tabsContainer: {
-    // paddingTop: 10,
-    paddingBottom: 10,
-    maxHeight: 50,
-    marginBottom: 5,
-    marginTop:20
+    maxHeight: screenHeight > 700 ? 60 : 55,
+    paddingVertical: 8,
   },
   tabButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    backgroundColor: '#eee',
-    borderRadius: 20,
-    marginRight: 10,
-
-
-    justifyContent: 'center',  // centra vertical
-    alignItems: 'center',      // centra horizontal
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: screenHeight > 700 ? 12 : 10,
+    paddingHorizontal: screenHeight > 700 ? 16 : 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: 25,
+    marginRight: 12,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(26, 26, 46, 0.1)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  activeTab: {
-    backgroundColor: '#333',
+  activeTabButton: {
+    backgroundColor: '#2A398D',
+    borderColor: '#2A398D',
+    shadowOpacity: 0.15,
   },
   tabText: {
-    color: '#333',
-    fontWeight: 'bold',
+    color: 'rgba(26, 26, 46, 0.8)',
+    fontWeight: '600',
+    fontSize: screenHeight > 700 ? 14 : 12,
   },
   activeTabText: {
-    color: '#fff',
+    color: '#ffffff',
+    fontWeight: '700',
   },
-  container: { flex: 1, backgroundColor: '#fff' },
-  header: {
+  contentContainer: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  // Legacy styles - keeping for backward compatibility
+  header_old: {
     backgroundColor: '#f4f4f4',
     padding: 15,
     borderLeftWidth: 5,
@@ -164,27 +229,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: "center"
   },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', marginLeft: 10 },
-
+  headerTitle_old: { fontSize: 18, fontWeight: 'bold', marginLeft: 10 },
   flagContainer: {
     width: 50,
     height: 20
   },
-
   flag: {
     width: "100%"
   },
-
-  // Estilo nuevo para el contenedor de las figuritas
   stickersContainer: {
-    flexDirection: 'row', // Las pone una al lado de otra
-    flexWrap: 'wrap',     // Si no caben, bajan a la siguiente línea
-    justifyContent: 'flex-start', // Alineadas a la izquierda
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
     paddingHorizontal: 5,
   },
-  // Estilo para asegurar que cada figurita ocupe el 33% (3 columnas)
   gridItem: {
-    width: '20%', // 100% / 3 = 33.33%
-    padding: 4       // Espacio entre ellas
+    width: '20%',
+    padding: 4
   }
 });

@@ -2,6 +2,6 @@
 
 import FixtureMatch from "@/components/FixtureScreen";
 
-export default function FixtureScreen() {
+ function FixtureScreen() {
   return <FixtureMatch />
 }

@@ -1,6 +1,7 @@
 import { useStickers } from '@/context/StickerContext';
 import { supabase } from '@/utils/supabase';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Dimensions, StyleSheet, Text, View } from 'react-native';
 import { ShareStickersButton } from './ShareStickersButton';
 
@@ -15,6 +16,7 @@ interface StatsState {
 }
 
 export const StickerStats = () => {
+  const { t } = useTranslation();
   const { inventory, isLoading: loadingInventory } = useStickers();
   const [stats, setStats] = useState<StatsState | null>(null);
   const [loading, setLoading] = useState(true);
@@ -70,36 +72,34 @@ export const StickerStats = () => {
 
   return (
     <View style={styles.container}>
-      
+
       <View style={styles.grid}>
 
-        {/* 1. Porcentaje del álbum */}
         <View style={styles.card}>
-          <Text style={styles.label}>Completado</Text>
+          <Text style={styles.label}>{t('album:stats:completed')}</Text>
           <Text style={[styles.value, { color: '#800020' }]}>
             {stats?.porcentaje.toFixed(1)}%
           </Text>
         </View>
 
-        {/* 2. Stickers faltantes */}
         <View style={styles.card}>
-          <Text style={styles.label}>Faltantes</Text>
+          <Text style={styles.label}>{t('album:stats:missing')}</Text>
           <Text style={styles.value}>{stats?.faltantes}</Text>
         </View>
 
-        {/* 3. Stickers conseguidas */}
         <View style={styles.card}>
-          <Text style={styles.label}>Conseguidas</Text>
+          <Text style={styles.label}>{t('album:stats:obtained')}</Text>
           <Text style={styles.value}>{stats?.conseguidas}</Text>
         </View>
 
-        {/* 4. Especiales faltantes */}
         <View style={styles.card}>
-          <Text style={styles.label}>Especiales Faltantes</Text>
+          <Text style={styles.label}>{t('album:stats:specialMissing')}</Text>
           <Text style={[styles.value, { color: '#f39c12' }]}>
             {stats?.especialesFaltantes}
           </Text>
-          <Text style={styles.miniLabel}>FWC, CC y Escudos</Text>
+          <Text style={styles.miniLabel}>
+            {t('album:stats:specialSubtitle')}
+          </Text>
         </View>
 
       </View>

@@ -1,85 +1,136 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from "react-i18next";
+import { Dimensions, Platform, StyleSheet, Text, View } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withSpring,
+  withTiming
+} from 'react-native-reanimated';
+
+const { width: screenWidth } = Dimensions.get('window');
 
 const CountdownTimer: React.FC<{ targetDate: string | Date }> = ({ targetDate }) => {
+  const { t } = useTranslation();
   const calculateTimeLeft = () => {
     const difference = +new Date(targetDate) - +new Date();
-
     if (difference <= 0) {
-      return {
-        days: "00",
-        hours: "00",
-        minutes: "00",
-        seconds: "00"
-      };
+      return { days: "00", hours: "00", minutes: "00", seconds: "00" };
     }
-
-    const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
-    const minutes = Math.floor((difference / 1000 / 60) % 60);
-    const seconds = Math.floor((difference / 1000) % 60);
-
     return {
-      days: String(days).padStart(2, '0'),
-      hours: String(hours).padStart(2, '0'),
-      minutes: String(minutes).padStart(2, '0'),
-      seconds: String(seconds).padStart(2, '0')
+      days: String(Math.floor(difference / (1000 * 60 * 60 * 24))).padStart(2, '0'),
+      hours: String(Math.floor((difference / (1000 * 60 * 60)) % 24)).padStart(2, '0'),
+      minutes: String(Math.floor((difference / 1000 / 60) % 60)).padStart(2, '0'),
+      seconds: String(Math.floor((difference / 1000) % 60)).padStart(2, '0')
     };
   };
 
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
 
+  // Shared values para la animación del texto
+  const daysScale = useSharedValue(1);
+  const hoursScale = useSharedValue(1);
+  const minutesScale = useSharedValue(1);
+  const secondsScale = useSharedValue(1);
+
   useEffect(() => {
     const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft());
+      const newTimeLeft = calculateTimeLeft();
+
+      const triggerAnim = (sharedVal: any) => {
+        sharedVal.value = withSequence(
+          withTiming(1.15, { duration: 100 }), // Un poco menos agresivo
+          withSpring(1, { damping: 10, stiffness: 150 })
+        );
+      };
+
+      if (newTimeLeft.seconds !== timeLeft.seconds) triggerAnim(secondsScale);
+      if (newTimeLeft.minutes !== timeLeft.minutes) triggerAnim(minutesScale);
+      if (newTimeLeft.hours !== timeLeft.hours) triggerAnim(hoursScale);
+      if (newTimeLeft.days !== timeLeft.days) triggerAnim(daysScale);
+
+      setTimeLeft(newTimeLeft);
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [targetDate]);
+  }, [targetDate, timeLeft]);
+
+  const createAnimatedStyle = (scaleValue: any) => useAnimatedStyle(() => ({
+    transform: [{ scale: scaleValue.value }],
+  }));
+
+  // Render individual de cada unidad para limpiar el JSX principal
+  const TimeUnit = ({ value, label, animStyle }: any) => (
+    <View style={styles.timeBox}>
+      <Animated.Text style={[styles.number, animStyle]}>
+        {value}
+      </Animated.Text>
+      <Text style={styles.label}>{label}</Text>
+    </View>
+  );
 
   return (
     <View style={styles.container}>
-      <View style={styles.timeBox}>
-        <Text style={styles.number}>{timeLeft.days}</Text>
-        <Text style={styles.label}>Días</Text>
-      </View>
-
-      <View style={styles.timeBox}>
-        <Text style={styles.number}>{timeLeft.hours}</Text>
-        <Text style={styles.label}>Horas</Text>
-      </View>
-
-      <View style={styles.timeBox}>
-        <Text style={styles.number}>{timeLeft.minutes}</Text>
-        <Text style={styles.label}>Minutos</Text>
-      </View>
-
-      <View style={styles.timeBox}>
-        <Text style={styles.number}>{timeLeft.seconds}</Text>
-        <Text style={styles.label}>Segundos</Text>
-      </View>
+      <TimeUnit value={timeLeft.days} label={t('contador:dias')} animStyle={createAnimatedStyle(daysScale)} />
+      <Separator />
+      <TimeUnit value={timeLeft.hours} label={t('contador:horas')} animStyle={createAnimatedStyle(hoursScale)} />
+      <Separator />
+      <TimeUnit value={timeLeft.minutes} label={t('contador:minutos')} animStyle={createAnimatedStyle(minutesScale)} />
+      <Separator />
+      <TimeUnit value={timeLeft.seconds} label={t('contador:segundos')} animStyle={createAnimatedStyle(secondsScale)} />
     </View>
   );
 };
 
+const Separator = () => (
+  <View style={styles.separator}>
+    <View style={styles.dot} />
+    <View style={styles.dot} />
+  </View>
+);
+
 const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
-    gap: 10,
+    alignItems: "center",
     justifyContent: "center",
+    width: '100%',
+    paddingHorizontal: 10,
   },
   timeBox: {
+    // Eliminamos flex: 1 para evitar que empujen hacia afuera
     alignItems: "center",
-    padding: 5,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 8,
+    paddingVertical: 10,
+    width: screenWidth > 400 ? 75 : 65, // Ancho dinámico según pantalla
+    marginHorizontal: 2,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   number: {
-    fontSize: 56,
-    fontWeight: "bold",
-    color: "#D1D4D1"
+    fontSize: Platform.OS === 'web' ? 28 : 24, // Reducido ligeramente para evitar desbordes
+    fontWeight: "800",
+    color: "#ffffff",
   },
   label: {
-    fontSize: 14,
-    color: "#D1D4D1",
+    fontSize: 9,
+    color: "rgba(255, 255, 255, 0.7)",
+    fontWeight: "600",
+    textTransform: 'uppercase',
+    marginTop: 2,
+  },
+  separator: {
+    justifyContent: 'center',
+    marginHorizontal: 2,
+  },
+  dot: {
+    width: 3,
+    height: 3,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    borderRadius: 1.5,
+    marginVertical: 2,
   },
 });
 

@@ -1,10 +1,17 @@
-import { useAuth } from '@/context/AuthContext'; // Importamos el Auth
+import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/utils/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 const STORAGE_KEY = '@sticker_inventory_v1';
+const CATALOG_CACHE_KEY = '@sticker_catalog_v1';
+const CATALOG_CACHE_DURATION = 1000 * 60 * 60; // 1 hour
+
 type InventoryType = Record<string, number>;
+type CachedCatalog = {
+  data: any[];
+  timestamp: number;
+};
 
 interface StickerContextType {
   inventory: InventoryType;
@@ -17,10 +24,15 @@ interface StickerContextType {
 const StickerContext = createContext<StickerContextType | undefined>(undefined);
 
 export const StickerProvider = ({ children }: { children: ReactNode }) => {
-  const { user } = useAuth(); // Sabemos si el usuario está logueado
+  const { user } = useAuth();
   const [inventory, setInventory] = useState<InventoryType>({});
   const [isLoading, setIsLoading] = useState(true);
-  const [catalog, setCatalog] = useState<any[]>([]); // <--- NUEVO ESTADO
+  const [catalog, setCatalog] = useState<any[]>([]);
+
+  // Refs for debouncing and preventing unnecessary operations
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSavedInventory = useRef<InventoryType>({});
+  const catalogLoadedRef = useRef(false);
 
   // 1. EFECTO DE CARGA: Decide si lee de local o de Supabase
   // useEffect(() => {
@@ -55,93 +67,171 @@ export const StickerProvider = ({ children }: { children: ReactNode }) => {
   //   loadData();
   // }, [user]); // Se re-ejecuta si el usuario inicia o cierra sesión
 
+  // Load catalog with caching
+  const loadCatalog = useCallback(async () => {
+    if (catalogLoadedRef.current) return;
+
+    try {
+      // Try cache first
+      const cachedData = await AsyncStorage.getItem(CATALOG_CACHE_KEY);
+      if (cachedData) {
+        const parsed: CachedCatalog = JSON.parse(cachedData);
+        const isExpired = Date.now() - parsed.timestamp > CATALOG_CACHE_DURATION;
+
+        if (!isExpired) {
+          setCatalog(parsed.data);
+          catalogLoadedRef.current = true;
+          return;
+        }
+      }
+
+      // Fetch from Supabase if cache miss/expired
+      const { data: catalogData, error: catalogError } = await supabase
+        .from('stickers')
+        .select('*');
+
+      if (!catalogError && catalogData) {
+        setCatalog(catalogData);
+        catalogLoadedRef.current = true;
+
+        // Cache the result
+        const cacheData: CachedCatalog = {
+          data: catalogData,
+          timestamp: Date.now()
+        };
+        await AsyncStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify(cacheData));
+      }
+    } catch (error) {
+      console.error('Error loading catalog:', error);
+    }
+  }, []);
+
+  // Load inventory
+  const loadInventory = useCallback(async () => {
+    try {
+      if (user) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('inventory')
+          .eq('id', user.id)
+          .single();
+
+        if (!error && data?.inventory) {
+          setInventory(data.inventory);
+          lastSavedInventory.current = data.inventory;
+          await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data.inventory));
+        }
+      } else {
+        const jsonValue = await AsyncStorage.getItem(STORAGE_KEY);
+        if (jsonValue) {
+          const parsedInventory = JSON.parse(jsonValue);
+          setInventory(parsedInventory);
+          lastSavedInventory.current = parsedInventory;
+        }
+      }
+    } catch (error) {
+      console.error('Error loading inventory:', error);
+    }
+  }, [user]);
+
+  // Initial data loading effect
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
       try {
-        // 1. Cargar el catálogo completo de figuritas desde Supabase
-        const { data: catalogData, error: catalogError } = await supabase
-          .from('stickers')
-          .select('*');
-
-        if (!catalogError && catalogData) {
-          setCatalog(catalogData);
-        }
-
-        // 2. Cargar el inventario (tu lógica actual)
-        if (user) {
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('inventory')
-            .eq('id', user.id)
-            .single();
-
-          if (!error && data?.inventory) {
-            setInventory(data.inventory);
-            await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data.inventory));
-          }
-        } else {
-          const jsonValue = await AsyncStorage.getItem(STORAGE_KEY);
-          if (jsonValue != null) setInventory(JSON.parse(jsonValue));
-        }
-      } catch (e) {
-        console.error("Error cargando datos:", e);
+        await Promise.all([loadCatalog(), loadInventory()]);
       } finally {
         setIsLoading(false);
       }
     };
 
     loadData();
+  }, [loadCatalog, loadInventory]);
+
+
+  // Optimized save function with proper debouncing
+  const saveInventory = useCallback(async (inventoryToSave: InventoryType) => {
+    try {
+      // Always save to local storage immediately
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(inventoryToSave));
+
+      // Save to Supabase if user is logged in
+      if (user) {
+        await supabase
+          .from('profiles')
+          .update({ inventory: inventoryToSave })
+          .eq('id', user.id);
+      }
+
+      lastSavedInventory.current = inventoryToSave;
+    } catch (error) {
+      console.error('Error saving inventory:', error);
+    }
   }, [user]);
 
-
-  // 2. EFECTO DE GUARDADO: Guarda en local y, si hay sesión, en la nube
+  // Debounced save effect
   useEffect(() => {
-    const saveData = async () => {
-      if (isLoading) return;
+    if (isLoading) return;
 
-      try {
-        const jsonValue = JSON.stringify(inventory);
-        await AsyncStorage.setItem(STORAGE_KEY, jsonValue); // Siempre guarda en local
+    // Check if inventory actually changed
+    const hasChanged = JSON.stringify(inventory) !== JSON.stringify(lastSavedInventory.current);
+    if (!hasChanged) return;
 
-        if (user) {
-          // Si hay sesión, actualizamos el JSONB en Supabase
-          await supabase
-            .from('profiles')
-            .update({ inventory })
-            .eq('id', user.id);
-        }
-      } catch (e) {
-        console.error("Error guardando datos:", e);
+    // Clear existing timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    // Set new timeout with better debouncing
+    saveTimeoutRef.current = setTimeout(() => {
+      saveInventory(inventory);
+    }, 800); // Slightly longer delay for better batching
+
+    // Cleanup function
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
       }
     };
-
-    // Usamos un pequeño delay (debounce visual) para no saturar Supabase si toca muchos seguidos
-    const timeoutId = setTimeout(() => {
-      saveData();
-    }, 500);
-
-    return () => clearTimeout(timeoutId);
-  }, [inventory, isLoading, user]);
+  }, [inventory, isLoading, saveInventory]);
 
 
-  const toggleSticker = (id: string) => {
+  // Optimized sticker manipulation with useCallback
+  const toggleSticker = useCallback((id: string) => {
     setInventory(prev => {
       const currentCount = prev[id] || 0;
       return { ...prev, [id]: currentCount + 1 };
     });
-  };
+  }, []);
 
-  const decrementSticker = (id: string) => {
+  const decrementSticker = useCallback((id: string) => {
     setInventory(prev => {
       const currentCount = prev[id] || 0;
       if (currentCount === 0) return prev;
       return { ...prev, [id]: currentCount - 1 };
     });
-  };
+  }, []);
+
+  // Memoized context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({
+    inventory,
+    isLoading,
+    catalog,
+    toggleSticker,
+    decrementSticker
+  }), [inventory, isLoading, catalog, toggleSticker, decrementSticker]);
+
+  // Cleanup effect
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
-    <StickerContext.Provider value={{ inventory, isLoading, toggleSticker, decrementSticker, catalog }}>
+    <StickerContext.Provider value={contextValue}>
       {children}
     </StickerContext.Provider>
   );

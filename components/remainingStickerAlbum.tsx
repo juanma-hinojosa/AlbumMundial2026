@@ -1,13 +1,15 @@
 import { StickerGrid } from "@/components/StickerGrid";
+import { useTranslation } from "react-i18next";
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function RemainingStickerAlbumScreen() {
+  const { t } = useTranslation();
   return(
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
       {/* Puedes agregar un encabezado extra si quieres */}
       <View style={{ padding: 10, backgroundColor: '#ffebee' }}>
-        <Text style={{ color: '#c62828', fontWeight: 'bold' }}>¡A buscarlas!</Text>
+        <Text style={{ color: '#c62828', fontWeight: 'bold' }}>{t('album:remainingTitle')}</Text>
       </View>
       <StickerGrid filterType="missing" />
     </SafeAreaView>
