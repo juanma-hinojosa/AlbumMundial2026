@@ -51,7 +51,18 @@ const resources = {
       },
       share: 'Compartir mis repetidas'
     },
-
+    swap: {
+      headerTitle: 'Intercambio',
+      headerSubtitle: 'Comparte tu coleccion',
+      statRepeat: 'Repetidas',
+      statFaltantes: 'Faltantes',
+      cardQr: 'Tu Codigo QR',
+      loadingText: 'Generando codigo...',
+      codeCompact: ' Código compacto - ¡Escanea fácil y rápido!',
+      code: 'Este código contiene tus repetidas y faltantes.',
+      shareCodeLabel: 'Codigo',
+      scantext: 'Escanear Código'
+    }
   },
   'en': {
     translation: {
@@ -100,6 +111,18 @@ const resources = {
       share: 'Share my duplicates'
 
     },
+    swap: {
+      headerTitle: 'Trade',
+      headerSubtitle: 'Show your collection and trade with others',
+      statRepeat: 'Duplicates',
+      statFaltantes: 'Missing items',
+      cardQr: 'Your QR Code',
+      loadingText: 'Creating your code...',
+      codeCompact: 'Compact code — just scan and go!',
+      code: 'This shows what you have and what you’re still looking for.',
+      shareCodeLabel: 'Code',
+      scantext: 'Scan'
+    }
   },
   'pt-BR': {
     translation: {
@@ -148,6 +171,18 @@ const resources = {
       share: 'Compartilhar minhas repetidas'
 
     },
+    swap: {
+      headerTitle: 'Trocas',
+      headerSubtitle: 'Mostre sua coleção e troque com outros',
+      statRepeat: 'Figurinhas repetidas',
+      statFaltantes: 'Figurinhas faltando',
+      cardQr: 'Seu QR Code',
+      loadingText: 'Gerando seu código...',
+      codeCompact: 'Código compacto — é só escanear!',
+      code: 'Aqui estão suas figurinhas repetidas e as que você ainda procura.',
+      shareCodeLabel: 'Código',
+      scantext: 'Escanear'
+    }
   }
 };
 

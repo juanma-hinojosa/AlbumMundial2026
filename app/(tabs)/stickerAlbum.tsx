@@ -13,22 +13,6 @@ import StickerObtainedScreen from "../../components/stickersObtained";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
-
-const COLORS = [
-  '#f4f4f2',
-  '#1d1c1a',
-  '#6fa5a3',
-  '#d5191e',
-  '#343975',
-  '#e3db71',
-  '#7a1c1d',
-  '#b1b6ce',
-  '#ebb8a5',
-  '#666f57',
-  '#b5ba47',
-  '#245da0',
-];
-
 // albumData
 export default function StickerAlbumScreen() {
   const { t } = useTranslation();

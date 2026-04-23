@@ -6,6 +6,7 @@ import { generateCompactQR, generateQRString } from '@/utils/exchangeLogic';
 import hapticFeedback from '@/utils/haptics';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Dimensions, Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import Animated, {
@@ -26,6 +27,7 @@ import { ShareStickersButton } from './ShareStickersButton';
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export default function MyQRScreen() {
+  const { t } = useTranslation();
   const { inventory, catalog } = useStickers();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
@@ -157,8 +159,8 @@ export default function MyQRScreen() {
             entering={FadeInUp.delay(200).duration(600)}
             style={styles.header}
           >
-            <Text style={styles.headerTitle}>Intercambio</Text>
-            <Text style={styles.headerSubtitle}>Comparte tu colección</Text>
+            <Text style={styles.headerTitle}> {t('swap:headerTitle')}</Text>
+            <Text style={styles.headerSubtitle}>{t('swap:headerSubtitle')}</Text>
           </Animated.View>
 
           {/* Stats Cards */}
@@ -170,12 +172,12 @@ export default function MyQRScreen() {
               <View style={[styles.statCard, { backgroundColor: 'rgba(76, 236, 196, 0.15)' }]}>
                 <Ionicons name="copy" size={24} color="#4ECDC4" />
                 <Text style={[styles.statNumber, { color: '#4ECDC4' }]}>{sharingStats.duplicates}</Text>
-                <Text style={styles.statLabel}>Repetidas</Text>
+                <Text style={styles.statLabel}>{t('swap:statRepeat')}</Text>
               </View>
               <View style={[styles.statCard, { backgroundColor: 'rgba(255, 107, 107, 0.15)' }]}>
                 <Ionicons name="help-circle" size={24} color="#FF6B6B" />
                 <Text style={[styles.statNumber, { color: '#FF6B6B' }]}>{sharingStats.missing}</Text>
-                <Text style={styles.statLabel}>Faltantes</Text>
+                <Text style={styles.statLabel}>{t('swap:statFaltantes')}</Text>
               </View>
             </View>
           </Animated.View>
@@ -189,7 +191,7 @@ export default function MyQRScreen() {
               <Animated.View style={floatingAnimatedStyle}>
                 <View style={styles.qrHeader}>
                   <Ionicons name="qr-code" size={28} color="#2A398D" />
-                  <Text style={styles.cardTitle}>Tu Código QR</Text>
+                  <Text style={styles.cardTitle}>{t('swap:cardQr')}</Text>
                 </View>
               </Animated.View>
 
@@ -223,7 +225,7 @@ export default function MyQRScreen() {
                 {isGeneratingQR ? (
                   <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#2A398D" />
-                    <Text style={styles.loadingText}>Generando código...</Text>
+                    <Text style={styles.loadingText}>{t('swap:loadingText')}</Text>
                   </View>
                 ) : qrError ? (
                   <View style={styles.errorContainer}>
@@ -251,13 +253,13 @@ export default function MyQRScreen() {
               <View style={styles.qrFooter}>
                 <Text style={styles.infoText}>
                   {qrData.length === 8
-                    ? '🚀 Código compacto - ¡Escanea fácil y rápido!'
-                    : 'Este código contiene tus repetidas y faltantes.'}
+                    ? `${t('swap:codeCompact')}`
+                    : `${t('swap:code')}`}
                 </Text>
 
                 {qrData.length === 8 && (
                   <View style={styles.shareCodeContainer}>
-                    <Text style={styles.shareCodeLabel}>Código:</Text>
+                    <Text style={styles.shareCodeLabel}>{t('swap:shareCodeLabel')}</Text>
                     <Text style={styles.shareCodeText}>{qrData}</Text>
                   </View>
                 )}
@@ -277,7 +279,7 @@ export default function MyQRScreen() {
                 activeOpacity={0.8}
               >
                 <Ionicons name="camera" size={24} color="white" />
-                <Text style={styles.scanText}>Escanear Código</Text>
+                <Text style={styles.scanText}>{t('swap:scantext')}</Text>
                 <Ionicons name="arrow-forward" size={20} color="white" />
               </TouchableOpacity>
             </Animated.View>

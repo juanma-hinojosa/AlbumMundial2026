@@ -5,16 +5,18 @@ import { StickerProvider, useStickers } from "@/context/StickerContext";
 import '@/utils/i18n';
 import { Stack } from "expo-router";
 import { StatusBar } from 'expo-status-bar';
+import { useTranslation } from 'react-i18next';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 // Creamos un componente intermedio que verifique la carga
 function RootNavigator() {
+  const { t } = useTranslation();
   const { isLoading } = useStickers();
 
   if (isLoading) {
     return (
       <LoadingSpinner
-        message="Cargando tu álbum..."
+        message={t('loadingApp')}
         size="large"
         style={{ backgroundColor: '#f8f9fa' }}
       />
