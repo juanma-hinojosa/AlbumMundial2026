@@ -62,6 +62,48 @@ const resources = {
       code: 'Este código contiene tus repetidas y faltantes.',
       shareCodeLabel: 'Codigo',
       scantext: 'Escanear Código'
+    },
+    escaner: {
+      permiso: {
+        title: 'Necesitamos permiso para usar la camara',
+        permitir: 'Dar Permiso',
+        cancelar: 'Cancelar'
+      },
+      intercambio: {
+        noMatch: 'No se encontraron intercambios posibles (quizás ya tienes lo que el otro ofrece)',
+        error: 'Error crítico al procesar',
+        antencion: 'Atencion',
+        atencionMessage: 'Selecciona al menos una figurita para el intercambio.',
+        sucess: 'Exito',
+        sucessMessage: 'Las figus de tu album se actualizaron correctamente'
+      },
+      qr: {
+        proccesingText: 'Procesando codigo QR...',
+        button: 'Cancelar'
+      },
+      error: {
+        errorTitle: 'Error al escanear QR',
+        try: 'Intentar de nuevo',
+        cancel: 'Cancelar'
+      },
+      match: {
+        matchTitle: 'Negociar intercambio',
+        instructionText: 'Toca las figus que queres incluir',
+        recibes: 'Recibes',
+        entregas: 'Entregas',
+        confirmBtnText: 'Confirmar cambio',
+        reEscanear: "Re-escanear",
+        cerrar: 'cerrar'
+      },
+      cameraView: {
+        overlayText: 'Apunta el QR de tu amigo',
+        overlaySubtext: 'Compatible con codigos antiguos y nuevos'
+      }
+    },
+    exportar: {
+      title: 'Hola! Te comparto mi lista de figuritas',
+      necesito: 'ME FALTAN',
+      repetidas: 'TENGO REPETIDAS'
     }
   },
   'en': {
@@ -122,6 +164,48 @@ const resources = {
       code: 'This shows what you have and what you’re still looking for.',
       shareCodeLabel: 'Code',
       scantext: 'Scan'
+    },
+    escaner: {
+      permiso: {
+        title: 'We need access to your camera',
+        permitir: 'Allow',
+        cancelar: 'Cancel'
+      },
+      intercambio: {
+        noMatch: 'No trades found (you might already have what they’re offering)',
+        error: 'Something went wrong',
+        antencion: 'Heads up',
+        atencionMessage: 'Pick at least one sticker to trade.',
+        sucess: 'Success',
+        sucessMessage: 'Your album stickers were updated successfully'
+      },
+      qr: {
+        proccesingText: 'Scanning QR code...',
+        button: 'Cancel'
+      },
+      error: {
+        errorTitle: 'Error scanning QR code',
+        try: 'Try again',
+        cancel: 'Cancel'
+      },
+      match: {
+        matchTitle: 'Set up a trade',
+        instructionText: 'Tap the stickers you want to include',
+        recibes: 'You get',
+        entregas: 'You give',
+        confirmBtnText: 'Confirm trade',
+        reEscanear: 'Scan again',
+        cerrar: 'Close'
+      },
+      cameraView: {
+        overlayText: 'Point at your friend’s QR code',
+        overlaySubtext: 'Works with old and new codes'
+      }
+    },
+    exportar: {
+      title: 'Hey! Here’s my sticker list',
+      necesito: 'NEED',
+      repetidas: 'DUPES'
     }
   },
   'pt-BR': {
@@ -182,6 +266,48 @@ const resources = {
       code: 'Aqui estão suas figurinhas repetidas e as que você ainda procura.',
       shareCodeLabel: 'Código',
       scantext: 'Escanear'
+    },
+    escaner: {
+      permiso: {
+        title: 'Precisamos de acesso à sua câmera',
+        permitir: 'Permitir',
+        cancelar: 'Cancelar'
+      },
+      intercambio: {
+        noMatch: 'Nenhuma troca encontrada (talvez você já tenha o que o outro oferece)',
+        error: 'Algo deu errado',
+        antencion: 'Atenção',
+        atencionMessage: 'Selecione pelo menos uma figurinha para trocar.',
+        sucess: 'Sucesso',
+        sucessMessage: 'As figurinhas do seu álbum foram atualizadas com sucesso'
+      },
+      qr: {
+        proccesingText: 'Lendo código QR...',
+        button: 'Cancelar'
+      },
+      error: {
+        errorTitle: 'Erro ao ler o QR code',
+        try: 'Tentar novamente',
+        cancel: 'Cancelar'
+      },
+      match: {
+        matchTitle: 'Negociar troca',
+        instructionText: 'Toque nas figurinhas que quer incluir',
+        recibes: 'Você recebe',
+        entregas: 'Você entrega',
+        confirmBtnText: 'Confirmar troca',
+        reEscanear: 'Escanear novamente',
+        cerrar: 'Fechar'
+      },
+      cameraView: {
+        overlayText: 'Aponte para o QR do seu amigo',
+        overlaySubtext: 'Compatível com códigos antigos e novos'
+      }
+    },
+    exportar: {
+      title: 'Oi! Te envio minha lista de figurinhas',
+      necesito: 'PRECISO',
+      repetidas: 'TENHO REPETIDAS'
     }
   }
 };

@@ -3,16 +3,22 @@ import { calculateMatch } from "@/utils/exchangeLogic";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useState } from "react";
-import { ActivityIndicator, Button, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useTranslation } from "react-i18next";
+import { ActivityIndicator, Alert, Button, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function ScannerScreen({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation('escaner');
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [matchResult, setMatchResult] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
 
-  const { inventory, catalog, toggleSticker, decrementSticker } = useStickers();
+  // --- NUEVOS ESTADOS PARA SELECCIÓN ---
+  const [selectedIncoming, setSelectedIncoming] = useState<string[]>([]);
+  const [selectedOutgoing, setSelectedOutgoing] = useState<string[]>([]);
+
+  const { inventory, catalog, toggleSticker, decrementSticker, processExchange } = useStickers();
 
   if (!permission) return <View />;
 
@@ -20,41 +26,13 @@ export default function ScannerScreen({ onClose }: { onClose: () => void }) {
   if (!permission.granted) {
     return (
       <View style={styles.container}>
-        <Text style={{ textAlign: 'center', marginBottom: 10 }}>Necesitamos permiso para usar la cámara</Text>
-        <Button onPress={requestPermission} title="Dar Permiso" />
-        <Button onPress={onClose} title="Cancelar" color="red" />
+        <Text style={{ textAlign: 'center', marginBottom: 10 }}>{t('escaner:permiso:title')}</Text>
+        <Button onPress={requestPermission} title={`${t('escaner:permiso:permitir')}`} />
+        <Button onPress={onClose} title={`${t('escaner:permiso:cancelar')}`} color="red" />
       </View>
     )
   }
 
-
-  // const handleBarCodeScanned = async ({ data }: { data: string }) => {
-  //   setScanned(true);
-  //   setIsProcessing(true);
-  //   setScanError(null);
-
-  //   try {
-  //     // calculateMatch is now async
-  //     const result = await calculateMatch(data, inventory, catalog);
-
-  //     if (result.error) {
-  //       setScanError(result.error);
-  //       setScanned(false);
-  //     } else if (result && (result.incoming?.length > 0 || result.outgoing?.length > 0)) {
-  //       setMatchResult(result);
-  //       console.log(matchResult)
-  //     } else {
-  //       setScanError("No se encontraron intercambios posibles");
-  //       setScanned(false);
-  //     }
-  //   } catch (e) {
-  //     console.error('Error processing QR:', e);
-  //     setScanError("Error al procesar el código QR");
-  //     setScanned(false);
-  //   } finally {
-  //     setIsProcessing(false);
-  //   }
-  // };
 
   const handleBarCodeScanned = async ({ data }: { data: string }) => {
     setScanned(true);
@@ -71,27 +49,42 @@ export default function ScannerScreen({ onClose }: { onClose: () => void }) {
       } else if (result && (result.incoming?.length > 0 || result.outgoing?.length > 0)) {
         setMatchResult(result); // Aquí actualizamos el estado para la pantalla
       } else {
-        setScanError("No se encontraron intercambios posibles (quizás ya tienes lo que el otro ofrece)");
+        setScanError(`${t('escaner:intercambio:noMatch')}`);
         setScanned(false);
       }
     } catch (e) {
-      setScanError("Error crítico al procesar");
+      setScanError(`${t('escaner:intercambio:error')}`);
       setScanned(false);
     } finally {
       setIsProcessing(false);
     }
   };
 
+  // --- LÓGICA DE SELECCIÓN AL TOCAR ---
+  const toggleSelection = (id: string, type: 'incoming' | 'outgoing') => {
+    if (type === 'incoming') {
+      setSelectedIncoming(prev =>
+        prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+      );
+    } else {
+      setSelectedOutgoing(prev =>
+        prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+      );
+    }
+  };
+
   const confirmExchange = () => {
-    // PROTECCIÓN: Si matchResult es null, no hacemos nada
-    if (!matchResult) return;
+     if (selectedIncoming.length === 0 && selectedOutgoing.length === 0) {
+      Alert.alert(`${t('escaner:intercambio:antencion')}`, `${t('escaner:intercambio:atencionMessage')}`);
+      return;
+    }
 
-    // Usamos ?. para evitar crashes si incoming/outgoing no existen
-    matchResult.incoming?.forEach((s: any) => toggleSticker(s.id));
-    matchResult.outgoing?.forEach((s: any) => decrementSticker(s.id)); matchResult.outgoing.forEach((s: any) => decrementSticker(s.id));
+    // Llamamos a la nueva función optimizada del Contexto
+    processExchange(selectedOutgoing, selectedIncoming);
 
-    alert('¡Intercambio realizado con éxito!');
-    onClose(); // Cerramos el escáner
+    Alert.alert(`${t('escaner:intercambio:sucess')}`, `${t('escaner:intercambio:atencionMessage')}`, [
+      { text: 'OK', onPress: onClose }
+    ]);
   }
 
   // Show processing state
@@ -99,8 +92,8 @@ export default function ScannerScreen({ onClose }: { onClose: () => void }) {
     return (
       <View style={styles.processingContainer}>
         <ActivityIndicator size="large" color="#2A398D" />
-        <Text style={styles.processingText}>Procesando código QR...</Text>
-        <Button title="Cancelar" onPress={() => {
+        <Text style={styles.processingText}>{t('escaner:qr:proccesingText')}</Text>
+        <Button title={`${t('escaner:qr:button')}`} onPress={() => {
           setIsProcessing(false);
           setScanned(false);
           onClose();
@@ -114,14 +107,14 @@ export default function ScannerScreen({ onClose }: { onClose: () => void }) {
     return (
       <View style={styles.errorContainer}>
         <Ionicons name="alert-circle" size={60} color="#d5191e" />
-        <Text style={styles.errorTitle}>Error al escanear</Text>
+        <Text style={styles.errorTitle}>{t('escaner:error:errorTitle')}</Text>
         <Text style={styles.errorMessage}>{scanError}</Text>
         <View style={styles.errorActions}>
-          <Button title="Intentar de nuevo" onPress={() => {
+          <Button title={`${t('escaner:error:try')}`} onPress={() => {
             setScanned(false);
             setScanError(null);
           }} />
-          <Button title="Cancelar" onPress={onClose} color="red" />
+          <Button title={`${t('escaner:error:cancel')}`} onPress={onClose} color="red" />
         </View>
       </View>
     );
@@ -130,90 +123,92 @@ export default function ScannerScreen({ onClose }: { onClose: () => void }) {
   // Renderizado del resultado: Verificamos que incoming exista
   const hasMatchData = scanned && matchResult && !scanError;
 
-  // Renderizado del resultado del Match
-  // if (hasMatchData) {
-  //   return (
-  //     <View style={styles.resultContainer}>
-  //       <Text style={styles.matchTitle}>¡Resultado del cruce!</Text>
-
-  //       <View style={styles.section}>
-  //         <Text style={styles.subTitle}>🟢 Recibes ({matchResult.incoming?.length || 0})</Text>
-  //         <FlatList
-  //           data={matchResult.incoming || []} // Array vacío por defecto
-  //           horizontal
-  //           renderItem={({ item }) => <Text style={styles.stickerBadge}>{item.id}</Text>}
-  //         />
-  //       </View>
-
-  //       <View style={styles.section}>
-  //         <Text style={styles.subTitle}>🔴 Entregas ({matchResult.outgoing?.length || 0})</Text>
-  //         <FlatList
-  //           data={matchResult.outgoing || []} // Array vacío por defecto
-  //           horizontal
-  //           renderItem={({ item }) => <Text style={styles.stickerBadge}>{item.id}</Text>}
-  //         />
-  //       </View>
-
-  //       <View style={styles.actions}>
-  //         <Button title="Confirmar Intercambio" onPress={confirmExchange} />
-  //         <Button title="Escanear de nuevo" onPress={() => {
-  //           setScanned(false);
-  //           setMatchResult(null); // Limpiamos el resultado anterior
-  //         }} color="gray" />
-  //         <Button title="Cancelar" onPress={onClose} color="red" />
-  //       </View>
-  //     </View>
-  //   );
-  // }
 
   if (hasMatchData) {
     return (
       <View style={styles.resultContainer}>
-        <Text style={styles.matchTitle}>¡Resultado del cruce!</Text>
+        <Text style={styles.matchTitle}>{t('escaner:match:matchTitle')} </Text>
+        <Text style={styles.instructionText}>{t('escaner:match:instructionText')}</Text>
 
         <View style={styles.section}>
-          <Text style={styles.subTitle}>🟢 Recibes ({matchResult.incoming?.length || 0})</Text>
+          <Text style={styles.subTitle}>
+            🟢 {t('escaner:match:recibes')} ({selectedIncoming.length}/{matchResult.incoming?.length})
+          </Text>
           <FlatList
             data={matchResult.incoming || []}
             horizontal
             showsHorizontalScrollIndicator={false}
-            keyExtractor={(item) => `incoming-${item.id}`} // Importante para el rendimiento
-            renderItem={({ item }) => (
-              <View style={styles.stickerCard}>
-                <Text style={styles.stickerBadge}>{item.codigo}</Text>
-                <Text style={styles.stickerCountry}>{item.pais_o_grupo}</Text>
-              </View>
-            )}
+            keyExtractor={(item) => `incoming-${item.id}`}
+            renderItem={({ item }) => {
+              const isSelected = selectedIncoming.includes(item.id);
+              return (
+                <TouchableOpacity
+                  onPress={() => toggleSelection(item.id, 'incoming')}
+                  style={[
+                    styles.stickerCard,
+                    isSelected ? styles.selectedIncomingCard : styles.unselectedCard
+                  ]}
+                >
+                  <View style={[styles.checkCircle, isSelected && styles.checkCircleActive]}>
+                    {isSelected && <Ionicons name="checkmark" size={12} color="white" />}
+                  </View>
+                  <Text style={[styles.stickerBadge, !isSelected && styles.unselectedText]}>{item.codigo}</Text>
+                  <Text style={styles.stickerCountry}>{item.pais_o_grupo}</Text>
+                </TouchableOpacity>
+              );
+            }}
           />
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.subTitle}>🔴 Entregas ({matchResult.outgoing?.length || 0})</Text>
+          <Text style={styles.subTitle}>
+            🔴 {t('escaner:match:entregas')} ({selectedOutgoing.length}/{matchResult.outgoing?.length})
+          </Text>
           <FlatList
             data={matchResult.outgoing || []}
             horizontal
             showsHorizontalScrollIndicator={false}
             keyExtractor={(item) => `outgoing-${item.id}`}
-            renderItem={({ item }) => (
-              <View style={[styles.stickerCard, { borderColor: '#FF6B6B' }]}>
-                <Text style={[styles.stickerBadge, { color: '#FF6B6B' }]}>{item.codigo}</Text>
-                <Text style={styles.stickerCountry}>{item.pais_o_grupo}</Text>
-              </View>
-            )}
+            renderItem={({ item }) => {
+              const isSelected = selectedOutgoing.includes(item.id);
+              return (
+                <TouchableOpacity
+                  onPress={() => toggleSelection(item.id, 'outgoing')}
+                  style={[
+                    styles.stickerCard,
+                    { borderColor: isSelected ? '#FF6B6B' : '#ccc' },
+                    isSelected ? styles.selectedOutgoingCard : styles.unselectedCard
+                  ]}
+                >
+                  <View style={[styles.checkCircle, isSelected && styles.checkCircleActiveRed]}>
+                    {isSelected && <Ionicons name="checkmark" size={12} color="white" />}
+                  </View>
+                  <Text style={[styles.stickerBadge, { color: isSelected ? '#FF6B6B' : '#999' }]}>{item.codigo}</Text>
+                  <Text style={styles.stickerCountry}>{item.pais_o_grupo}</Text>
+                </TouchableOpacity>
+              );
+            }}
           />
         </View>
 
         <View style={styles.actions}>
-          <TouchableOpacity style={styles.confirmBtn} onPress={confirmExchange}>
-            <Text style={styles.confirmBtnText}>Confirmar Intercambio</Text>
+          <TouchableOpacity
+            style={[styles.confirmBtn, (selectedIncoming.length + selectedOutgoing.length === 0) && { opacity: 0.5 }]}
+            onPress={confirmExchange}
+          >
+            <Text style={styles.confirmBtnText}>{t('escaner:match:confirmBtnText')}</Text>
           </TouchableOpacity>
 
-          <Button title="Escanear de nuevo" onPress={() => {
-            setScanned(false);
-            setMatchResult(null);
-          }} color="gray" />
-
-          <Button title="Cancelar" onPress={onClose} color="red" />
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 }}>
+            <Button title={`${t('escaner:match:reEscanear')}`} onPress={() => {
+              setScanned(false);
+              setMatchResult(null);
+              setSelectedIncoming([]);
+              setSelectedOutgoing([]);
+            }} color="gray" />
+            <Button title={`${t('escaner:match:cerrar')}`} onPress={onClose} color="red" />
+            
+          </View>
         </View>
       </View>
     );
@@ -240,8 +235,8 @@ export default function ScannerScreen({ onClose }: { onClose: () => void }) {
             <View style={[styles.corner, styles.bottomLeft]} />
             <View style={[styles.corner, styles.bottomRight]} />
           </View>
-          <Text style={styles.overlayText}>Apunta al QR de tu amigo</Text>
-          <Text style={styles.overlaySubtext}>Compatible con códigos antiguos y nuevos</Text>
+          <Text style={styles.overlayText}>{t('escaner:cameraView:overlayText')} </Text>
+          <Text style={styles.overlaySubtext}>{t('escaner:cameraView:overlaySubtext')} </Text>
         </View>
       </CameraView>
     </View>
@@ -387,5 +382,46 @@ const styles = StyleSheet.create({
   actions: {
     gap: 10,
     marginTop: 20
+  },
+  instructionText: {
+    textAlign: 'center',
+    color: '#666',
+    marginBottom: 15
+  },
+  unselectedCard: {
+    opacity: 0.6,
+    backgroundColor: '#f5f5f5',
+    borderStyle: 'dashed',
+  },
+  selectedIncomingCard: {
+    borderColor: '#4ECDC4',
+    backgroundColor: '#f0fffb',
+    borderWidth: 2,
+  },
+  selectedOutgoingCard: {
+    borderColor: '#FF6B6B',
+    backgroundColor: '#fff5f5',
+    borderWidth: 2,
+  },
+  unselectedText: {
+    color: '#999'
+  },
+  checkCircle: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#ccc',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10
+  },
+  checkCircleActive: {
+    backgroundColor: '#4ECDC4',
+  },
+  checkCircleActiveRed: {
+    backgroundColor: '#FF6B6B',
   }
 });

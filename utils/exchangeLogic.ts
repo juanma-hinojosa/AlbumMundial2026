@@ -24,15 +24,23 @@ export async function createSharingSession(
     const swaps: string[] = [];
 
     // Usamos el catálogo real de la base de datos
+    // catalog.forEach(sticker => {
+    //   // const count = inventory[sticker.id] || 0;
+    //   // En lugar de: inventory[sticker.id]
+    //   // Usa:
+    //   const count = inventory[String(sticker.id)] || 0;
+    //   if (count === 0) {
+    //     needs.push(sticker.id);
+    //   } else if (count > 1) {
+    //     swaps.push(sticker.id);
+    //   }
+    // });
     catalog.forEach(sticker => {
-      // const count = inventory[sticker.id] || 0;
-      // En lugar de: inventory[sticker.id]
-      // Usa:
       const count = inventory[String(sticker.id)] || 0;
       if (count === 0) {
-        needs.push(sticker.id);
+        needs.push(String(sticker.id)); // <-- Envolver en String()
       } else if (count > 1) {
-        swaps.push(sticker.id);
+        swaps.push(String(sticker.id)); // <-- Envolver en String()
       }
     });
 
@@ -102,15 +110,24 @@ export const generateQRString = (inventory: InventoryType, catalog: any[]): stri
   const needs: string[] = [];
   const swaps: string[] = [];
 
+  // catalog.forEach(sticker => {
+  //   // const count = inventory[sticker.id] || 0;
+  //   // En lugar de: inventory[sticker.id]
+  //   // Usa:
+  //   const count = inventory[String(sticker.id)] || 0;
+  //   if (count === 0) {
+  //     needs.push(sticker.id);
+  //   } else if (count > 1) {
+  //     swaps.push(sticker.id);
+  //   }
+  // });
+
   catalog.forEach(sticker => {
-    // const count = inventory[sticker.id] || 0;
-    // En lugar de: inventory[sticker.id]
-    // Usa:
     const count = inventory[String(sticker.id)] || 0;
     if (count === 0) {
-      needs.push(sticker.id);
+      needs.push(String(sticker.id)); // <-- Envolver en String()
     } else if (count > 1) {
-      swaps.push(sticker.id);
+      swaps.push(String(sticker.id)); // <-- Envolver en String()
     }
   });
 
@@ -160,18 +177,19 @@ export const calculateMatch = async (qrString: string, myInventory: InventoryTyp
       theirSwaps = swapPart?.replace('Cambio: ', '').split(',').filter(id => id) || [];
     }
 
-    // Lo que ellos tienen repetido y a mí me falta
-    const toReceiveIds = theirSwaps.filter(id => (myInventory[id] || 0) === 0);
+    // Lo que ellos tienen repetido y a mí me falta (aseguramos que id sea String para buscar en el objeto)
+    const toReceiveIds = theirSwaps.filter(id => (myInventory[String(id)] || 0) === 0);
 
     // Lo que a ellos les falta y yo tengo repetido
-    const toGiveIds = theirNeeds.filter(id => (myInventory[id] || 0) > 1);
+    const toGiveIds = theirNeeds.filter(id => (myInventory[String(id)] || 0) > 1);
 
     const findSticker = (id: string) => {
-      const found = catalog.find((s: any) => s.id === id);
+      // CORRECCIÓN CLAVE: Forzamos ambos a String para asegurar la coincidencia
+      const found = catalog.find((s: any) => String(s.id) === String(id));
       if (found) {
         return {
           ...found,
-          countryName: found.pais_o_grupo // Mapeamos el nombre para la UI
+          countryName: found.pais_o_grupo
         };
       }
       return null;

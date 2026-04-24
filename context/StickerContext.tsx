@@ -19,6 +19,7 @@ interface StickerContextType {
   catalog: any[]; // <--- NUEVO: Guardaremos todos los stickers aquí
   toggleSticker: (id: string) => void;
   decrementSticker: (id: string) => void;
+  processExchange: (givenIds: string[], receivedIds: string[]) => void;
 }
 
 const StickerContext = createContext<StickerContextType | undefined>(undefined);
@@ -35,37 +36,37 @@ export const StickerProvider = ({ children }: { children: ReactNode }) => {
   const catalogLoadedRef = useRef(false);
 
   // 1. EFECTO DE CARGA: Decide si lee de local o de Supabase
-  // useEffect(() => {
-  //   const loadData = async () => {
-  //     setIsLoading(true);
-  //     try {
-  //       if (user) {
-  //         // Si hay usuario, leemos desde Supabase (Nube)
-  //         const { data, error } = await supabase
-  //           .from('profiles')
-  //           .select('inventory')
-  //           .eq('id', user.id)
-  //           .single();
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        if (user) {
+          // Si hay usuario, leemos desde Supabase (Nube)
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('inventory')
+            .eq('id', user.id)
+            .single();
 
-  //         if (!error && data?.inventory) {
-  //           setInventory(data.inventory);
-  //           // Backup local por si se queda sin internet
-  //           await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data.inventory));
-  //         }
-  //       } else {
-  //         // Si NO hay usuario (o es anónimo), leemos desde el teléfono
-  //         const jsonValue = await AsyncStorage.getItem(STORAGE_KEY);
-  //         if (jsonValue != null) setInventory(JSON.parse(jsonValue));
-  //       }
-  //     } catch (e) {
-  //       console.error("Error cargando datos:", e);
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   };
+          if (!error && data?.inventory) {
+            setInventory(data.inventory);
+            // Backup local por si se queda sin internet
+            await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data.inventory));
+          }
+        } else {
+          // Si NO hay usuario (o es anónimo), leemos desde el teléfono
+          const jsonValue = await AsyncStorage.getItem(STORAGE_KEY);
+          if (jsonValue != null) setInventory(JSON.parse(jsonValue));
+        }
+      } catch (e) {
+        console.error("Error cargando datos:", e);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  //   loadData();
-  // }, [user]); // Se re-ejecuta si el usuario inicia o cierra sesión
+    loadData();
+  }, [user]); // Se re-ejecuta si el usuario inicia o cierra sesión
 
   // Load catalog with caching
   const loadCatalog = useCallback(async () => {
@@ -212,14 +213,38 @@ export const StickerProvider = ({ children }: { children: ReactNode }) => {
     });
   }, []);
 
+  // NUEVO: Procesa el intercambio sumando y restando en una sola operación
+  const processExchange = useCallback((givenIds: string[], receivedIds: string[]) => {
+    setInventory(prev => {
+      const newInventory = { ...prev };
+
+      // 1. Restar los que estoy dando
+      givenIds.forEach(id => {
+        const currentCount = newInventory[String(id)] || 0;
+        if (currentCount > 0) {
+          newInventory[String(id)] = currentCount - 1;
+        }
+      });
+
+      // 2. Sumar los que estoy recibiendo
+      receivedIds.forEach(id => {
+        const currentCount = newInventory[String(id)] || 0;
+        newInventory[String(id)] = currentCount + 1;
+      });
+
+      return newInventory;
+    });
+  }, []);
+
   // Memoized context value to prevent unnecessary re-renders
   const contextValue = useMemo(() => ({
     inventory,
     isLoading,
     catalog,
     toggleSticker,
-    decrementSticker
-  }), [inventory, isLoading, catalog, toggleSticker, decrementSticker]);
+    decrementSticker,
+    processExchange // <--- Agregar aquí
+  }), [inventory, isLoading, catalog, toggleSticker, decrementSticker, processExchange]);
 
   // Cleanup effect
   useEffect(() => {

@@ -72,10 +72,10 @@ export const ShareStickersButton = () => {
       });
 
       // 3. Construimos el mensaje de texto formateado
-      let message = "¡Hola! Te comparto mi lista de figuritas 🏆\n\n";
+      let message = `${t("exportar:title")} 🏆\n\n`;
 
       // Agregamos las FALTANTES
-      message += "❌ ME FALTAN:\n";
+      message += `❌ ${t("exportar:necesito")}:\n`;
       let hasMissing = false;
       
       // Recorremos usando el orden original de la base de datos
@@ -92,7 +92,7 @@ export const ShareStickersButton = () => {
       }
 
       // Agregamos las REPETIDAS
-      message += "\n🔁 TENGO REPETIDAS:\n";
+      message += `\n🔁 ${t("exportar:repetidas")}:\n`;
       let hasRepeated = false;
 
       // Recorremos usando el orden original de la base de datos
