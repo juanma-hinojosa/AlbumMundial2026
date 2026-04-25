@@ -18,6 +18,13 @@ const resources = {
         exchange: 'Intercambiar',
         account: 'Cuenta',
         settings: 'Ajustes'
+      },
+      logout: {
+        logout: 'Cerrar Sesion',
+        logoutTitle: 'Cerrar Sesion',
+        logoutConfirm: '¿Estás seguro de que deseas salir?',
+        cancel: 'Cancelar',
+        salir: 'salir'
       }
     },
     contador: {
@@ -104,6 +111,11 @@ const resources = {
       title: 'Hola! Te comparto mi lista de figuritas',
       necesito: 'ME FALTAN',
       repetidas: 'TENGO REPETIDAS'
+    },
+    votos: {
+      votoTitle: 'Prediccion del Campeon',
+      votosNumTotal: 'Total de votos',
+      votoChoice: 'Elige a tu Campeon del Mundial'
     }
   },
   'en': {
@@ -119,7 +131,15 @@ const resources = {
         exchange: 'Trade',
         account: 'Account',
         settings: 'Settings'
+      },
+      logout: {
+        logout: 'Log out',
+        logoutTitle: 'Log out',
+        logoutConfirm: 'Are you sure you want to log out?',
+        cancel: 'Cancel',
+        salir: 'Exit'
       }
+
     },
     contador: {
       faltan: 'there are',
@@ -206,7 +226,13 @@ const resources = {
       title: 'Hey! Here’s my sticker list',
       necesito: 'NEED',
       repetidas: 'DUPES'
+    },
+    votos: {
+      votoTitle: 'Champion Prediction',
+      votosNumTotal: 'Total Votes',
+      votoChoice: 'Pick your World Cup Champion'
     }
+
   },
   'pt-BR': {
     translation: {
@@ -221,7 +247,15 @@ const resources = {
         exchange: 'Trocar',
         account: 'Conta',
         settings: 'Configurações'
+      },
+      logout: {
+        logout: 'Sair',
+        logoutTitle: 'Sair',
+        logoutConfirm: 'Tem certeza que deseja sair?',
+        cancel: 'Cancelar',
+        salir: 'Sair'
       }
+
     },
     contador: {
       faltan: 'faltam',
@@ -308,7 +342,13 @@ const resources = {
       title: 'Oi! Te envio minha lista de figurinhas',
       necesito: 'PRECISO',
       repetidas: 'TENHO REPETIDAS'
+    },
+    votos: {
+      votoTitle: 'Palpite do Campeão',
+      votosNumTotal: 'Total de votos',
+      votoChoice: 'Escolha o seu Campeão da Copa'
     }
+
   }
 };
 
@@ -341,7 +381,7 @@ i18n
   .use(languageDetector)
   .use(initReactI18next)
   .init({
-    compatibilityJSON: 'v3', // 👈 ESTO ES VITAL EN REACT NATIVE
+    compatibilityJSON: 'v4', // 👈 ESTO ES VITAL EN REACT NATIVE
     resources,
     fallbackLng: 'es-LA',
     interpolation: {

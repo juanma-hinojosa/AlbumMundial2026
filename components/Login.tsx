@@ -1,7 +1,12 @@
 import { supabase } from '@/utils/supabase';
 import * as Linking from 'expo-linking';
+import * as WebBrowser from 'expo-web-browser'; // <-- IMPORTANTE
 import React, { useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+
+
+// Ayuda a cerrar pestañas del navegador que hayan quedado colgadas
+WebBrowser.maybeCompleteAuthSession();
 
 // Cambiamos 'export const' por una función normal para exportarla al final
 const LoginScreen = () => {
@@ -33,15 +38,48 @@ const LoginScreen = () => {
     setLoading(false);
   };
 
+  // const handleGoogleLogin = async () => {
+  //   setLoading(true);
+  //   const redirectUrl = Linking.createURL('/'); 
+  //   const { error } = await supabase.auth.signInWithOAuth({
+  //     provider: 'google',
+  //     options: { redirectTo: redirectUrl },
+  //   });
+  //   if (error) Alert.alert("Error de Google", error.message);
+  //   setLoading(false);
+  // };
+
   const handleGoogleLogin = async () => {
     setLoading(true);
+    // Definimos a dónde debe volver la app después de loguearse
     const redirectUrl = Linking.createURL('/'); 
-    const { error } = await supabase.auth.signInWithOAuth({
+    
+    // 1. Obtener la URL de Google desde Supabase
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: redirectUrl },
+      options: { 
+        redirectTo: redirectUrl,
+        skipBrowserRedirect: true, // Evita que Supabase intente redirigir solo (útil en RN)
+      },
     });
-    if (error) Alert.alert("Error de Google", error.message);
-    setLoading(false);
+
+    if (error) {
+      Alert.alert("Error de Google", error.message);
+      setLoading(false);
+      return;
+    }
+
+    // 2. Abrir la URL manualmente en el celular
+    if (data?.url) {
+      const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
+      
+      // Si el usuario cerró el navegador sin loguearse, quitamos el loading
+      if (result.type === 'cancel') {
+        setLoading(false);
+      }
+    } else {
+      setLoading(false);
+    }
   };
 
   return (

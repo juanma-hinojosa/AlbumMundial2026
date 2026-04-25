@@ -82,7 +82,7 @@ export default function ScannerScreen({ onClose }: { onClose: () => void }) {
     // Llamamos a la nueva función optimizada del Contexto
     processExchange(selectedOutgoing, selectedIncoming);
 
-    Alert.alert(`${t('escaner:intercambio:sucess')}`, `${t('escaner:intercambio:atencionMessage')}`, [
+    Alert.alert(`${t('escaner:intercambio:sucess')}`, `${t('escaner:intercambio:sucessMessage')}`, [
       { text: 'OK', onPress: onClose }
     ]);
   }

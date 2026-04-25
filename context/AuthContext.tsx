@@ -32,11 +32,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     // 3. NUEVO: Escuchar Deep Links (Para Google OAuth)
-    const handleDeepLink = async (event: { url: string }) => {
-      const { queryParams } = Linking.parse(event.url);
+    // const handleDeepLink = async (event: { url: string }) => {
+    //   const { queryParams } = Linking.parse(event.url);
       
-      // Si la URL contiene datos de autenticación, Supabase los procesará
-      // gracias a que pusimos detectSessionInUrl: true
+    //   // Si la URL contiene datos de autenticación, Supabase los procesará
+    //   // gracias a que pusimos detectSessionInUrl: true
+    // };
+
+    // 3. NUEVO: Escuchar Deep Links (Para Google OAuth)
+    const handleDeepLink = async (event: { url: string }) => {
+      const { url } = event;
+      
+      // Forzar a Supabase a procesar los tokens que vienen en la URL
+      if (url.includes('#access_token') || url.includes('?code=')) {
+        await supabase.auth.getSessionFromUrl(url);
+      }
     };
 
     const linkSubscription = Linking.addEventListener('url', handleDeepLink);

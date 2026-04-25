@@ -40,7 +40,7 @@ const CountdownTimer: React.FC<{ targetDate: string | Date }> = ({ targetDate })
 
       const triggerAnim = (sharedVal: any) => {
         sharedVal.value = withSequence(
-          withTiming(1.15, { duration: 100 }), // Un poco menos agresivo
+          withTiming(1, { duration: 100 }), // Un poco menos agresivo
           withSpring(1, { damping: 10, stiffness: 150 })
         );
       };

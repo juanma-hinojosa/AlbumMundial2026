@@ -94,20 +94,20 @@ export default function TabsLayout() {
             }}
           />
 
-          <Tabs.Screen
+          {/* <Tabs.Screen
             name="Login"
             options={{
               title: t('tabs.account'),
               href: user ? null : undefined,
               tabBarIcon: ({ color }) => <Ionicons name="person-outline" size={24} color={color} />,
             }}
-          />
+          /> */}
 
           <Tabs.Screen
             name="settings"
             options={{
               title: t('tabs.settings'),
-              tabBarIcon: ({ color }) => <Ionicons name="settings-outline" size={24} color={color} />,
+              tabBarIcon: ({ color }) => <Ionicons name="person-outline" size={24} color={color} />,
             }}
           />
 

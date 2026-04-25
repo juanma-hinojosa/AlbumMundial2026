@@ -200,14 +200,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: Platform.OS === 'web' ? 40 : screenHeight > 700 ? 30 : 20,
   },
+  // logo: {
+  //   width: Platform.OS === 'web' ? 100 : screenHeight > 700 ? 90 : 70,
+  //   height: Platform.OS === 'web' ? 100 : screenHeight > 700 ? 90 : 70,
+  //   shadowColor: '#000',
+  //   shadowOffset: { width: 0, height: 4 },
+  //   shadowOpacity: 0.3,
+  //   shadowRadius: 8,
+  // },
   logo: {
     width: Platform.OS === 'web' ? 100 : screenHeight > 700 ? 90 : 70,
     height: Platform.OS === 'web' ? 100 : screenHeight > 700 ? 90 : 70,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    ...Platform.select({
+      web: {
+        filter: 'drop-shadow(0px 4px 8px rgba(0, 0, 0, 0.3))',
+      },
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        // Android no soporta sombras en PNGs transparentes nativamente
+        // La mejor opción aquí es elevar el componente o usar una librería
+        elevation: 8,
+      }
+    }),
   },
+
   countdownSection: {
     alignItems: 'center',
     marginVertical: screenHeight > 700 ? 20 : 15,
@@ -264,6 +285,6 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.7)',
     fontWeight: '500',
     textAlign: 'center',
-    textTransform:'capitalize'
+    textTransform: 'capitalize'
   },
 });

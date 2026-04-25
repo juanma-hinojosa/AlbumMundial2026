@@ -1,9 +1,9 @@
 import { useStickers } from '@/context/StickerContext';
 import { supabase } from '@/utils/supabase';
-import { Image } from 'expo-image';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Dimensions, Platform, SectionList, StyleSheet, Text, View } from 'react-native';
+import CountryFlag from 'react-native-country-flag';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { StickerItem } from './stickerItem';
 
@@ -84,8 +84,226 @@ interface StickerGridProps {
   NZL: 'nz',
 };
 
+// export const StickerGrid = ({ filterType = 'all' }: StickerGridProps) => {
+//   const { t ,i18n} = useTranslation();
+//   const { inventory, toggleSticker, decrementSticker } = useStickers();
+//   const [sections, setSections] = useState<any[]>([]);
+
+//   useEffect(() => {
+//     fetchStickers();
+//   }, [inventory, filterType, i18n.language]);
+
+//   const sortByNumber = (a: any, b: any) => {
+//     const numA = parseInt(a.codigo.replace(/\D/g, ''));
+//     const numB = parseInt(b.codigo.replace(/\D/g, ''));
+//     return numA - numB;
+//   };
+
+//   const filterStickers = (stickers: any[]) => {
+//     return stickers.filter((sticker: any) => {
+//       const qty = inventory[sticker.id] || 0;
+
+//       if (filterType === 'missing') return qty === 0;
+//       if (filterType === 'repeated') return qty > 1;
+//       return true;
+//     });
+//   };
+
+//   const fetchStickers = async () => {
+//     const { data, error } = await supabase.from('stickers').select('*');
+
+//     if (error) {
+//       console.log("SUPABASE ERROR:", error);
+//       return;
+//     }
+
+//     if (!data || data.length === 0) return;
+
+//     const grouped: any = {};
+//     const especiales: any = { FWC: [], CC: [] };
+
+//     data.forEach((sticker) => {
+//       if (sticker.es_especial) {
+//         if (sticker.pais_o_grupo === 'FWC') especiales.FWC.push(sticker);
+//         if (sticker.pais_o_grupo === 'CC') especiales.CC.push(sticker);
+//         return;
+//       }
+
+//       const group = sticker.grupo;
+//       const country = sticker.pais_o_grupo;
+
+//       if (!grouped[group]) grouped[group] = {};
+//       if (!grouped[group][country]) grouped[group][country] = [];
+
+//       grouped[group][country].push(sticker);
+//     });
+
+//     const sectionsFormatted: any[] = [];
+
+//     // 🌍 GRUPOS
+//     Object.keys(grouped).forEach((group) => {
+//       const countries = grouped[group];
+
+//       const dataByCountry: any[] = [];
+
+//       Object.keys(countries).forEach((country) => {
+//         const stickers = countries[country]
+//           .sort(sortByNumber);
+
+//         const filtered = filterStickers(stickers);
+
+//         if (filtered.length > 0) {
+//           dataByCountry.push({
+//             country,
+//             stickers: filtered,
+//           });
+//         }
+//       });
+
+//       if (dataByCountry.length > 0) {
+//         sectionsFormatted.push({
+//           title: `${t('album:grupo')} ${group}`,
+//           data: dataByCountry,
+//         });
+//       }
+//     });
+
+//     // ⭐ FWC
+//     const filteredFWC = filterStickers(especiales.FWC).sort(sortByNumber);
+
+//     if (filteredFWC.length > 0) {
+//       sectionsFormatted.push({
+//         title: '⭐ Especiales FIFA',
+//         data: [
+//           {
+//             country: 'FWC',
+//             stickers: filteredFWC,
+//           },
+//         ],
+//       });
+//     }
+
+//     // 🥤 CC
+//     const filteredCC = filterStickers(especiales.CC).sort(sortByNumber);
+
+//     if (filteredCC.length > 0) {
+//       sectionsFormatted.push({
+//         title: '🥤 Coca-Cola',
+//         data: [
+//           {
+//             country: 'CC',
+//             stickers: filteredCC,
+//           },
+//         ],
+//       });
+//     }
+
+//     setSections(sectionsFormatted);
+//   };
+
+//   return (
+//     <SectionList
+//       sections={sections}
+//       keyExtractor={(item, index) => index.toString()}
+
+//       renderSectionHeader={({ section }) => (
+//         <Animated.View
+//           entering={FadeInUp.duration(400)}
+//           style={styles.groupHeaderContainer}
+//         >
+//           <View style={styles.groupHeader}>
+//             <View style={styles.groupIconContainer}>
+//               <Text style={styles.groupIcon}>
+//                 {section.title.includes('Grupo') ? '🏆' :
+//                  section.title.includes('FIFA') ? '⭐' : '🥤'}
+//               </Text>
+//             </View>
+//             <Text style={styles.groupTitle}>{section.title}</Text>
+//           </View>
+//           <View style={styles.groupDivider} />
+//         </Animated.View>
+//       )}
+
+//       renderItem={({ item, index }) => (
+//         <Animated.View
+//           entering={FadeInDown.delay(index * 50).duration(400)}
+//           style={styles.countrySection}
+//         >
+//           {/* Country Header */}
+//           {item.country !== 'FWC' && item.country !== 'CC' && (
+//             <View style={styles.countryHeader}>
+//               <View style={styles.flagContainer}>
+//                 <Image
+//                   style={styles.flagImage}
+//                   source={{
+//                     uri: `https://flagcdn.com/w320/${flagMap[item.country] || item.country?.toLowerCase()}.png`,
+//                   }}
+//                 />
+//               </View>
+//               <Text style={styles.countryTitle}>{item.country}</Text>
+//               <View style={styles.countryStats}>
+//                 <Text style={styles.countryStatsText}>
+//                   {item.stickers.length} stickers
+//                 </Text>
+//               </View>
+//             </View>
+//           )}
+
+//           {/* Stickers Grid */}
+//           <View style={styles.stickersGrid}>
+//             {item.stickers.map((sticker: any, stickerIndex: number) => (
+//               <Animated.View
+//                 key={sticker.id}
+//                 entering={FadeInUp.delay((index * 50) + (stickerIndex * 25)).duration(300)}
+//                 style={styles.stickerWrapper}
+//               >
+//                 <StickerItem
+//                   item={sticker}
+//                   quantity={inventory[sticker.id]}
+//                   onToggle={() => toggleSticker(sticker.id)}
+//                   onDecrement={() => decrementSticker(sticker.id)}
+//                 />
+//               </Animated.View>
+//             ))}
+//           </View>
+//         </Animated.View>
+//       )}
+
+//       contentContainerStyle={{ paddingBottom: 80 }}
+//     />
+//   );
+// };
+
+// // Calculate responsive grid dimensions
+// const getGridDimensions = () => {
+//   const isWeb = Platform.OS === 'web';
+//   const padding = 32; // Total horizontal padding from container
+//   const cardPadding = 32; // Padding inside each card
+//   const gap = 6; // Gap between items
+
+//   let columns;
+//   if (isWeb) {
+//     if (screenWidth > 1200) columns = 12;
+//     else if (screenWidth > 900) columns = 10;
+//     else if (screenWidth > 600) columns = 8;
+//     else columns = 6;
+//   } else {
+//     // Better mobile calculations
+//     if (screenWidth >= 430) columns = 5;      // iPhone 14 Pro Max, larger phones
+//     else if (screenWidth >= 390) columns = 4; // iPhone 14 Pro, iPhone 12/13
+//     else if (screenWidth >= 375) columns = 4; // iPhone SE, smaller iPhones
+//     else columns = 3; // Very small screens
+//   }
+
+//   const availableWidth = screenWidth - padding - cardPadding;
+//   const itemWidth = (availableWidth - (gap * (columns - 1))) / columns;
+//   return { columns, itemWidth, gap };
+// };
+
+// const { columns, itemWidth, gap } = getGridDimensions();
+
 export const StickerGrid = ({ filterType = 'all' }: StickerGridProps) => {
-  const { t ,i18n} = useTranslation();
+  const { t, i18n } = useTranslation();
   const { inventory, toggleSticker, decrementSticker } = useStickers();
   const [sections, setSections] = useState<any[]>([]);
 
@@ -147,9 +365,7 @@ export const StickerGrid = ({ filterType = 'all' }: StickerGridProps) => {
       const dataByCountry: any[] = [];
 
       Object.keys(countries).forEach((country) => {
-        const stickers = countries[country]
-          .sort(sortByNumber);
-
+        const stickers = countries[country].sort(sortByNumber);
         const filtered = filterStickers(stickers);
 
         if (filtered.length > 0) {
@@ -205,7 +421,6 @@ export const StickerGrid = ({ filterType = 'all' }: StickerGridProps) => {
     <SectionList
       sections={sections}
       keyExtractor={(item, index) => index.toString()}
-
       renderSectionHeader={({ section }) => (
         <Animated.View
           entering={FadeInUp.duration(400)}
@@ -223,52 +438,55 @@ export const StickerGrid = ({ filterType = 'all' }: StickerGridProps) => {
           <View style={styles.groupDivider} />
         </Animated.View>
       )}
+      renderItem={({ item, index }) => {
+        // Obtenemos el código ISO del mapa de forma segura
+        const isoCode = flagMap[item.country];
 
-      renderItem={({ item, index }) => (
-        <Animated.View
-          entering={FadeInDown.delay(index * 50).duration(400)}
-          style={styles.countrySection}
-        >
-          {/* Country Header */}
-          {item.country !== 'FWC' && item.country !== 'CC' && (
-            <View style={styles.countryHeader}>
-              <View style={styles.flagContainer}>
-                <Image
-                  style={styles.flagImage}
-                  source={{
-                    uri: `https://flagcdn.com/w320/${flagMap[item.country] || item.country?.toLowerCase()}.png`,
-                  }}
-                />
+        return (
+          <Animated.View
+            entering={FadeInDown.delay(index * 50).duration(400)}
+            style={styles.countrySection}
+          >
+            {/* Country Header */}
+            {item.country !== 'FWC' && item.country !== 'CC' && (
+              <View style={styles.countryHeader}>
+                <View style={styles.flagContainer}>
+                  {/* Validación para evitar error si no hay ISO válido */}
+                  {isoCode ? (
+                    <CountryFlag isoCode={isoCode} size={28} style={styles.flagStyle} />
+                  ) : (
+                    <Text style={{ fontSize: 24 }}>🏳️</Text>
+                  )}
+                </View>
+                <Text style={styles.countryTitle}>{item.country}</Text>
+                <View style={styles.countryStats}>
+                  <Text style={styles.countryStatsText}>
+                    {item.stickers.length} stickers
+                  </Text>
+                </View>
               </View>
-              <Text style={styles.countryTitle}>{item.country}</Text>
-              <View style={styles.countryStats}>
-                <Text style={styles.countryStatsText}>
-                  {item.stickers.length} stickers
-                </Text>
-              </View>
+            )}
+
+            {/* Stickers Grid */}
+            <View style={styles.stickersGrid}>
+              {item.stickers.map((sticker: any, stickerIndex: number) => (
+                <Animated.View
+                  key={sticker.id}
+                  entering={FadeInUp.delay((index * 50) + (stickerIndex * 25)).duration(300)}
+                  style={styles.stickerWrapper}
+                >
+                  <StickerItem
+                    item={sticker}
+                    quantity={inventory[sticker.id]}
+                    onToggle={() => toggleSticker(sticker.id)}
+                    onDecrement={() => decrementSticker(sticker.id)}
+                  />
+                </Animated.View>
+              ))}
             </View>
-          )}
-
-          {/* Stickers Grid */}
-          <View style={styles.stickersGrid}>
-            {item.stickers.map((sticker: any, stickerIndex: number) => (
-              <Animated.View
-                key={sticker.id}
-                entering={FadeInUp.delay((index * 50) + (stickerIndex * 25)).duration(300)}
-                style={styles.stickerWrapper}
-              >
-                <StickerItem
-                  item={sticker}
-                  quantity={inventory[sticker.id]}
-                  onToggle={() => toggleSticker(sticker.id)}
-                  onDecrement={() => decrementSticker(sticker.id)}
-                />
-              </Animated.View>
-            ))}
-          </View>
-        </Animated.View>
-      )}
-
+          </Animated.View>
+        );
+      }}
       contentContainerStyle={{ paddingBottom: 80 }}
     />
   );
@@ -300,7 +518,8 @@ const getGridDimensions = () => {
   return { columns, itemWidth, gap };
 };
 
-const { columns, itemWidth, gap } = getGridDimensions();
+const { itemWidth, gap } = getGridDimensions();
+
 
 const styles = StyleSheet.create({
   groupHeaderContainer: {
@@ -357,19 +576,18 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(26, 26, 46, 0.1)',
   },
   flagContainer: {
-    width: 56,
+    width: 46,
     height: 36,
-    borderRadius: 8,
-    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.15,
     shadowRadius: 2,
   },
-  flagImage: {
-    width: '100%',
-    height: '100%',
+  flagStyle: {
+    borderRadius: 4,
   },
   countryTitle: {
     fontSize: 20,
