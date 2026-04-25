@@ -2,7 +2,7 @@
 
 import ChampionVote from "@/components/ChampionVote";
 
-export default function FixtureScreen() {
+function FixtureScreen() {
   return (
     // <FixtureMatch />
     <ChampionVote />
