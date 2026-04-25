@@ -45,7 +45,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       // Forzar a Supabase a procesar los tokens que vienen en la URL
       if (url.includes('#access_token') || url.includes('?code=')) {
-        await supabase.auth.getSessionFromUrl(url);
+        // @ts-ignore: getSessionFromUrl may not exist in current Supabase typings
+        await (supabase.auth as any).getSessionFromUrl(url);
       }
     };
 

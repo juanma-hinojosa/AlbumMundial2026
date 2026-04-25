@@ -1,6 +1,5 @@
 import ErrorBoundary from "@/components/ErrorBoundary";
 import LoginScreen from "@/components/Login";
-import LogoutButton from "@/components/LogoutButton";
 import { useAuth } from "@/context/AuthContext";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -76,7 +75,7 @@ export default function SettingsScreen() {
             })}
           </Animated.View>
 
-          {user ? (
+          {/* {user ? (
             <LogoutButton />
           ) : (
             <Animated.View entering={FadeInUp.delay(300).duration(600)} style={styles.loginContainer}>
@@ -89,7 +88,7 @@ export default function SettingsScreen() {
                 <Text style={styles.loginText}>Iniciar sesión</Text>
               </TouchableOpacity>
             </Animated.View>
-          )}
+          )} */}
         </View>
 
       </SafeAreaView>

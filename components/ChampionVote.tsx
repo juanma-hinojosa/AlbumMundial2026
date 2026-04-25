@@ -2,11 +2,11 @@ import { useAuth } from '@/context/AuthContext';
 import { useStickers } from '@/context/StickerContext';
 import { supabase } from '@/utils/supabase'; // Asegúrate de tener tu cliente de supabase aquí
 import Ionicons from '@expo/vector-icons/Ionicons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import CountryFlag from "react-native-country-flag";
-import LoginScreen from './Login';
 
 interface VoteStats {
   team_id: string;
@@ -30,6 +30,14 @@ const flagMap: any = {
 // Definimos la fecha límite: 3 de Julio de 2026 a las 23:59:59
 const VOTING_DEADLINE = new Date('2026-07-03T23:59:59');
 
+// Generador de UUID para usuarios anónimos
+const generateUUID = () => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
+
 export default function ChampionVote() {
   const { t } = useTranslation();
   const { catalog } = useStickers(); // Usamos tu catálogo para sacar los nombres de los países
@@ -51,57 +59,45 @@ export default function ChampionVote() {
 
   useEffect(() => {
     fetchData();
-    if (user) {
-      setShowLogin(false);
-    }
+    // if (user) {
+    //   setShowLogin(false);
+    // }
   }, [user]);
+
+  // Función para obtener el ID de usuario (Logueado o Anónimo local)
+  const getVoterId = async () => {
+    if (user?.id) return user.id;
+
+    let guestId = await AsyncStorage.getItem('guest_voter_id');
+    if (!guestId) {
+      guestId = generateUUID();
+      await AsyncStorage.setItem('guest_voter_id', guestId);
+    }
+    return guestId;
+  };
 
   const fetchData = async () => {
     setLoading(true);
-    // try {
-    //   const { data: { user } } = await supabase.auth.getUser();
-
-    //   // Consultar todos los votos para las estadísticas
-    //   const { data: allVotes, error: votesError } = await supabase
-    //     .from('votes')
-    //     .select('team_id');
-
-    //   if (votesError) throw votesError;
-
-    //   // Consultar el voto del usuario actual
-    //   if (user) {
-    //     const { data: myVote } = await supabase
-    //       .from('votes')
-    //       .select('team_id')
-    //       .eq('user_id', user.id)
-    //       .single();
-    //     if (myVote) setUserVote(myVote.team_id);
-    //   }
-
-    //   calculateStats(allVotes || []);
-    // } 
     try {
+      // Necesitamos traer el user_id para compararlo localmente
       const { data: allVotes, error: votesError } = await supabase
         .from('votes')
-        .select('team_id');
+        .select('team_id, user_id');
 
       if (votesError) throw votesError;
 
-      // Usamos el 'user' del contexto en lugar de volver a consultar a supabase
-      if (user) {
-        const { data: myVote } = await supabase
-          .from('votes')
-          .select('team_id')
-          .eq('user_id', user.id)
-          .single();
-        if (myVote) setUserVote(myVote.team_id);
+      const currentVoterId = await getVoterId();
+
+      // Buscamos si este ID ya emitió un voto
+      const myVote = allVotes?.find(v => v.user_id === currentVoterId);
+      if (myVote) {
+        setUserVote(myVote.team_id);
       } else {
-        setUserVote(null); // Limpiar si no hay usuario
+        setUserVote(null);
       }
 
       calculateStats(allVotes || []);
-    }
-    catch (error) {
+    } catch (error) {
       console.error(error);
     } finally {
       setLoading(false);
@@ -128,29 +124,31 @@ export default function ChampionVote() {
   };
 
 
+
   // const handleVote = async (teamId: string) => {
-  //   // 1. Verificar fecha límite primero
   //   if (!isVotingOpen) {
   //     Alert.alert("Votación cerrada", "El tiempo para elegir campeón ha finalizado.");
   //     return;
   //   }
 
-  //   try {
-  //     const { data: { user } } = await supabase.auth.getUser();
-  //     if (!user) return Alert.alert("Error", "Debes iniciar sesión para votar");
+  //   // SI NO HAY USUARIO, MOSTRAMOS EL COMPONENTE DE LOGIN
+  //   if (!user) {
+  //     setShowLogin(true);
+  //     return;
+  //   }
 
-  //     // 2. Corregir el Upsert con la opción onConflict
+  //   try {
   //     const { error } = await supabase
   //       .from('votes')
   //       .upsert(
   //         { user_id: user.id, team_id: teamId },
-  //         { onConflict: 'user_id' } // <--- ESTO arregla el error 409
+  //         { onConflict: 'user_id' }
   //       );
 
   //     if (error) throw error;
 
   //     setUserVote(teamId);
-  //     fetchData();
+  //     fetchData(); // Refrescar stats
   //     Alert.alert("¡Voto registrado!", `Has elegido a ${teamId} como tu campeón.`);
   //   } catch (error) {
   //     console.error("Error en upsert:", error);
@@ -164,43 +162,33 @@ export default function ChampionVote() {
       return;
     }
 
-    // SI NO HAY USUARIO, MOSTRAMOS EL COMPONENTE DE LOGIN
-    if (!user) {
-      setShowLogin(true);
-      return;
-    }
+    const voterId = await getVoterId();
 
     try {
       const { error } = await supabase
         .from('votes')
         .upsert(
-          { user_id: user.id, team_id: teamId },
+          { user_id: voterId, team_id: teamId },
           { onConflict: 'user_id' }
         );
 
       if (error) throw error;
 
       setUserVote(teamId);
-      fetchData(); // Refrescar stats
+      fetchData();
       Alert.alert("¡Voto registrado!", `Has elegido a ${teamId} como tu campeón.`);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error en upsert:", error);
       Alert.alert("Error", "No se pudo actualizar el voto.");
     }
   };
 
-  const podium = stats.slice(0, 3);
-
-  if (showLogin) {
-    return (
-      <View style={{ flex: 1 }}>
-        {/* Aquí renderizamos tu componente Login. Asumo que puedes pasarle una prop 
-            para cerrarlo manualmente si el usuario se arrepiente */}
-        <LoginScreen />
-      </View>
-    );
-  }
-
+  // Reorganizar el podio: [Plata, Oro, Bronce]
+  const rawPodium = stats.slice(0, 3);
+  const podiumArrangement = [];
+  if (rawPodium.length > 1) podiumArrangement.push({ ...rawPodium[1], rank: 2 });
+  if (rawPodium.length > 0) podiumArrangement.push({ ...rawPodium[0], rank: 1 });
+  if (rawPodium.length > 2) podiumArrangement.push({ ...rawPodium[2], rank: 3 });
 
   if (loading) return <ActivityIndicator size="large" style={{ marginTop: 50 }} />;
 
@@ -208,25 +196,50 @@ export default function ChampionVote() {
     <View style={styles.container}>
       <Text style={styles.title}>🏆 {t('votos:votoTitle')}</Text>
 
-      {/* PODIO */}
+      {/* NUEVO PODIO MEJORADO */}
       <View style={styles.podiumContainer}>
-        {podium.map((item, index) => (
-          <View key={item.team_id} style={[styles.podiumStep, { height: 130 - index * 20 }]}>
-            {flagMap[item.name] && (
-              <CountryFlag isoCode={flagMap[item.name]} size={index === 0 ? 30 : 25} style={styles.flagShadow} />
-            )}
-            <Text style={styles.podiumName} numberOfLines={1}>{item.name}</Text>
-            <Text style={styles.podiumPercent}>{item.percentage.toFixed(1)}%</Text>
-            <Text style={styles.podiumPlace}>
-              {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
-            </Text>
-          </View>
-        ))}
+        {podiumArrangement.map((item) => {
+          const isFirst = item.rank === 1;
+          const isSecond = item.rank === 2;
+          const isThird = item.rank === 3;
+
+          return (
+            <View 
+              key={item.team_id} 
+              style={[
+                styles.podiumStep, 
+                isFirst && styles.rank1,
+                isSecond && styles.rank2,
+                isThird && styles.rank3
+              ]}
+            >
+              <Text style={styles.podiumPlace}>
+                {isFirst ? '🥇' : isSecond ? '🥈' : '🥉'}
+              </Text>
+
+              {flagMap[item.name] && (
+                <CountryFlag 
+                  isoCode={flagMap[item.name]} 
+                  size={isFirst ? 36 : 28} 
+                  style={[styles.flagShadow, isFirst && styles.flagFirst]} 
+                />
+              )}
+              
+              <Text style={[styles.podiumName, isFirst && styles.nameFirst]} numberOfLines={1}>
+                {item.name}
+              </Text>
+              
+              <Text style={[styles.podiumPercent, isFirst && styles.percentFirst]}>
+                {item.percentage.toFixed(1)}%
+              </Text>
+            </View>
+          );
+        })}
       </View>
 
       <Text style={styles.totalText}>{t('votos:votosNumTotal')}: {totalVotes}</Text>
 
-      {/* LISTA */}
+      {/* LISTA (Mantenida igual, solo asegúrate de integrar tus estilos anteriores) */}
       <FlatList
         data={stats}
         keyExtractor={(item) => item.team_id}
@@ -257,49 +270,189 @@ export default function ChampionVote() {
       />
     </View>
   );
+  // (
+  //   <View style={styles.container}>
+  //     <Text style={styles.title}>🏆 {t('votos:votoTitle')}</Text>
+
+  //     {/* PODIO */}
+  //     <View style={styles.podiumContainer}>
+  //       {podium.map((item, index) => (
+  //         <View key={item.team_id} style={[styles.podiumStep, { height: 130 - index * 20 }]}>
+  //           {flagMap[item.name] && (
+  //             <CountryFlag isoCode={flagMap[item.name]} size={index === 0 ? 30 : 25} style={styles.flagShadow} />
+  //           )}
+  //           <Text style={styles.podiumName} numberOfLines={1}>{item.name}</Text>
+  //           <Text style={styles.podiumPercent}>{item.percentage.toFixed(1)}%</Text>
+  //           <Text style={styles.podiumPlace}>
+  //             {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
+  //           </Text>
+  //         </View>
+  //       ))}
+  //     </View>
+
+  //     <Text style={styles.totalText}>{t('votos:votosNumTotal')}: {totalVotes}</Text>
+
+  //     {/* LISTA */}
+  //     <FlatList
+  //       data={stats}
+  //       keyExtractor={(item) => item.team_id}
+  //       contentContainerStyle={{ paddingBottom: 40 }}
+  //       renderItem={({ item }) => (
+  //         <TouchableOpacity
+  //           style={[styles.voteItem, userVote === item.team_id && styles.votedItem]}
+  //           onPress={() => handleVote(item.team_id)}
+  //           disabled={!isVotingOpen}
+  //         >
+  //           <View style={styles.teamInfo}>
+  //             {flagMap[item.name] ? (
+  //               <CountryFlag isoCode={flagMap[item.name]} size={20} style={styles.listFlag} />
+  //             ) : (
+  //               <Ionicons name="flag-outline" size={20} style={styles.listFlag} />
+  //             )}
+  //             <Text style={styles.teamName}>{item.name}</Text>
+  //           </View>
+
+  //           <View style={styles.voteRight}>
+  //             <Text style={styles.percentText}>{item.percentage.toFixed(1)}%</Text>
+  //             {userVote === item.team_id && (
+  //               <Ionicons name="checkmark-circle" size={22} color="#4ECDC4" />
+  //             )}
+  //           </View>
+  //         </TouchableOpacity>
+  //       )}
+  //     />
+  //   </View>
+  // );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: '#fff' },
   title: { fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 20, color: '#2A398D' },
   subTitle: { fontSize: 18, fontWeight: '600', marginTop: 20, marginBottom: 10 },
+  // --- ESTILOS DEL PODIO ---
   podiumContainer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    justifyContent: 'space-around',
-    height: 160,
-    marginBottom: 20
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 10,
+    marginBottom: 30,
+    height: 190, // Suficiente espacio para las cajas grandes
   },
   podiumStep: {
-    width: '30%',
-    backgroundColor: '#F8F9FA',
-    borderRadius: 12,
+    width: '31%',
     alignItems: 'center',
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#E9ECEF',
+    justifyContent: 'flex-start',
+    paddingTop: 15,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
     elevation: 3,
   },
-  podiumName: { fontWeight: 'bold', fontSize: 12, marginTop: 8, color: '#444' },
-  podiumPercent: { fontSize: 14, color: '#2A398D', fontWeight: 'bold' },
-  podiumPlace: { fontSize: 20, marginTop: 5 },
-  flagShadow: { borderRadius: 4, elevation: 2 },
-  totalText: { textAlign: 'center', color: '#888', marginBottom: 15, fontSize: 14 },
+  rank1: {
+    height: 175,
+    backgroundColor: '#FFF8E1', // Fondo dorado suave
+    borderWidth: 2,
+    borderColor: '#FFD700',
+    borderBottomWidth: 0,
+    zIndex: 10,
+  },
+  rank2: {
+    height: 145,
+    backgroundColor: '#F5F5F5', // Fondo plateado suave
+    borderWidth: 2,
+    borderColor: '#B0BEC5',
+    borderBottomWidth: 0,
+  },
+  rank3: {
+    height: 125,
+    backgroundColor: '#FBE9E7', // Fondo bronce suave
+    borderWidth: 2,
+    borderColor: '#FFAB91',
+    borderBottomWidth: 0,
+  },
+  podiumPlace: {
+    fontSize: 26,
+    marginBottom: 6,
+  },
+  flagShadow: {
+    borderRadius: 4,
+    marginBottom: 8,
+  },
+  flagFirst: {
+    borderWidth: 1,
+    borderColor: '#FFD700',
+  },
+  podiumName: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#444',
+    textAlign: 'center',
+    paddingHorizontal: 4,
+  },
+  nameFirst: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  podiumPercent: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 4,
+    fontWeight: 'bold',
+  },
+  percentFirst: {
+    fontSize: 14,
+    color: '#F57F17',
+  },
+  totalText: {
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 15,
+    color: '#555',
+  },
+  // --- TUS ESTILOS DE LA LISTA ---
   voteItem: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 12,
-    paddingHorizontal: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-    alignItems: 'center'
+    paddingHorizontal: 16,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 12,
+    marginBottom: 10,
   },
-  votedItem: { backgroundColor: '#F0FFFB', borderRadius: 10, borderBottomWidth: 0 },
-  teamInfo: { flexDirection: 'row', alignItems: 'center' },
-  listFlag: { marginRight: 15, borderRadius: 3 },
-  teamName: { fontSize: 16, color: '#333' },
-  voteRight: { flexDirection: 'row', alignItems: 'center' },
-  percentText: { marginRight: 10, color: '#666', fontWeight: '500' },
+  votedItem: {
+    backgroundColor: '#E0F7FA',
+    borderColor: '#4ECDC4',
+    borderWidth: 1,
+  },
+  teamInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  listFlag: {
+    marginRight: 10,
+    borderRadius: 3,
+  },
+  teamName: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  voteRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  percentText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#666',
+  },
   closedBadge: {
     backgroundColor: '#ff4444',
     padding: 5,
@@ -311,5 +464,6 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     fontSize: 12
-  }
+  },
+  
 });
