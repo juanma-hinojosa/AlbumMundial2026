@@ -3,14 +3,16 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import { useAuth } from '@/context/AuthContext';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Tabs } from "expo-router";
 import { useTranslation } from "react-i18next";
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabsLayout() {
   const { t } = useTranslation();
   const { user, isLoading } = useAuth()
+
+  const insets = useSafeAreaInsets();
 
   if (isLoading) {
     return (
@@ -50,9 +52,9 @@ export default function TabsLayout() {
               shadowOffset: { width: 0, height: -2 },
               shadowOpacity: 0.1,
               shadowRadius: 8,
-              paddingBottom: 4,
+              paddingBottom: 4 + insets.bottom,
               paddingTop: 4,
-              height: 60,
+              height: 60 + insets.bottom,
             },
             tabBarLabelStyle: {
               fontSize: 11,
@@ -78,13 +80,13 @@ export default function TabsLayout() {
             }}
           />
 
-          <Tabs.Screen
+          {/* <Tabs.Screen
             name="fixture"
             options={{
               title: t('tabs.fixture'),
               tabBarIcon: ({ color }) => <MaterialCommunityIcons name="merge" size={24} color={color} />
             }}
-          />
+          /> */}
 
           <Tabs.Screen
             name="exchange"
